@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#6c5ce7" />
+  <title>Hima OS</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Hima OS" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <button id="menu-btn" class="menu-btn" aria-label="Open menu" aria-controls="drawer" aria-expanded="false">☰</button>
+    <div class="app-header-titles">
+      <h1>🧠 Hima OS</h1>
+      <p class="subtitle">Your second brain, one section at a time</p>
+    </div>
+  </header>
+
+  <div id="drawer-backdrop" class="drawer-backdrop hidden"></div>
+  <nav id="drawer" class="drawer" aria-hidden="true" aria-label="Sections">
+    <ul class="nav-list">
+      <li><button class="nav-item" data-view="dashboard"><span class="nav-ico">🏠</span><span class="nav-label">Dashboard</span></button></li>
+      <li><button class="nav-item" data-view="donow"><span class="nav-ico">⚡</span><span class="nav-label">Do Now</span></button></li>
+      <li><button class="nav-item" data-view="checkin"><span class="nav-ico">💗</span><span class="nav-label">Daily check-in</span></button></li>
+    </ul>
+    <p class="nav-heading">Sections</p>
+    <ul class="nav-list" id="nav-sections"></ul>
+    <ul class="nav-list nav-list-bottom">
+      <li><button class="nav-item" data-view="manage"><span class="nav-ico">🗂️</span><span class="nav-label">Manage sections</span></button></li>
+      <li><button class="nav-item" data-view="settings"><span class="nav-ico">⚙️</span><span class="nav-label">Settings</span></button></li>
+    </ul>
+  </nav>
+
+  <main>
+    <!-- ============ DASHBOARD ============ -->
+    <section id="view-dashboard" class="view hidden">
+      <div class="card kid-greeting"><h2 id="dash-greeting">Welcome back 👋</h2><p class="hint" id="dash-date"></p></div>
+      <button type="button" id="dash-checkin" class="checkin-cta">
+        <span class="checkin-cta-ico" id="dash-checkin-ico">💗</span>
+        <span class="checkin-cta-main">
+          <span class="checkin-cta-title" id="dash-checkin-title">How are you feeling?</span>
+          <span class="checkin-cta-sub" id="dash-checkin-sub">A 5-second energy + mood tap.</span>
+        </span>
+        <span class="donow-cta-arrow">→</span>
+      </button>
+      <button type="button" id="dash-donow" class="donow-cta">
+        <span class="donow-cta-ico">⚡</span>
+        <span class="donow-cta-main">
+          <span class="donow-cta-title">Do Now</span>
+          <span class="donow-cta-sub">Got a spare pocket of time? Find what fits.</span>
+        </span>
+        <span class="donow-cta-arrow">→</span>
+      </button>
+      <div class="dash-tiles">
+        <div class="stat-tile" id="dash-open"></div>
+        <div class="stat-tile" id="dash-today"></div>
+      </div>
+      <div class="card">
+        <h2>Coming up</h2>
+        <div id="dash-schedule"></div>
+      </div>
+      <div class="card">
+        <h2>Open to-dos</h2>
+        <div id="dash-todos"></div>
+      </div>
+      <h2 class="section-heading">Your sections</h2>
+      <div class="dash-sections" id="dash-sections"></div>
+    </section>
+
+    <!-- ============ DO NOW ============ -->
+    <section id="view-donow" class="view hidden">
+      <div class="section-head">
+        <h2>⚡ Do Now</h2>
+        <span id="donow-count" class="count-badge"></span>
+      </div>
+      <p class="hint">Tell me the pocket of time and energy you have — I'll surface tasks that fit right now.</p>
+      <div class="card">
+        <div class="field chip-field">
+          <label>How much time?</label>
+          <div class="chip-row" id="donow-mins" data-val=""></div>
+        </div>
+        <div class="field chip-field">
+          <label>Energy</label>
+          <div class="chip-row" id="donow-energy" data-val=""></div>
+        </div>
+      </div>
+      <div id="donow-list"></div>
+    </section>
+
+    <!-- ============ DAILY CHECK-IN ============ -->
+    <section id="view-checkin" class="view hidden">
+      <div class="section-head">
+        <h2>💗 Daily check-in</h2>
+        <span id="checkin-streak" class="count-badge"></span>
+      </div>
+      <p class="hint">A quick, judgment-free note of how you are right now. Tap a mood or energy — the context tags and note are optional.</p>
+      <div class="card">
+        <form id="checkin-form" autocomplete="off">
+          <div class="field chip-field">
+            <label>Mood</label>
+            <div class="chip-row mood-row" id="checkin-mood" data-val=""></div>
+          </div>
+          <div class="field chip-field">
+            <label>Energy</label>
+            <div class="chip-row" id="checkin-energy" data-val=""></div>
+          </div>
+          <div class="field chip-field">
+            <label>What's going on? <span class="chip-optional">(optional)</span></label>
+            <div class="chip-row" id="checkin-tags" data-val=""></div>
+          </div>
+          <div class="field note-with-mic">
+            <input id="checkin-note" placeholder="Anything to add? (optional)" />
+            <button type="button" id="checkin-mic" class="mic-btn hidden" aria-label="Speak your check-in" title="Speak your check-in">🎤</button>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="checkin-submit">Log this moment</button>
+          </div>
+        </form>
+      </div>
+      <h2 class="section-heading">Today</h2>
+      <div id="checkin-today"></div>
+    </section>
+
+    <!-- ============ SECTION (generic) ============ -->
+    <section id="view-section" class="view hidden">
+      <div class="section-head">
+        <h2 id="section-title">Section</h2>
+        <span id="section-count" class="count-badge"></span>
+      </div>
+      <p class="hint" id="section-empty-hint"></p>
+      <div class="card">
+        <form id="item-form" autocomplete="off">
+          <input type="hidden" id="item-id" />
+          <div id="item-fields"></div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="item-submit">Add</button>
+            <button type="button" id="item-cancel" class="btn-secondary hidden">Cancel</button>
+          </div>
+        </form>
+      </div>
+      <div class="list-toolbar" id="section-toolbar"></div>
+      <div id="items-list"></div>
+    </section>
+
+    <!-- ============ MANAGE SECTIONS ============ -->
+    <section id="view-manage" class="view hidden">
+      <div class="card">
+        <h2>Add a section</h2>
+        <form id="section-form" autocomplete="off">
+          <input type="hidden" id="sec-id" />
+          <div class="grid-2">
+            <div class="field"><label for="sec-icon">Icon</label><input id="sec-icon" maxlength="2" placeholder="📝" /></div>
+            <div class="field"><label for="sec-name">Name *</label><input id="sec-name" required placeholder="e.g. Groceries" /></div>
+          </div>
+          <div class="field">
+            <label for="sec-kind">Type</label>
+            <select id="sec-kind">
+              <option value="checklist">Checklist — tick things off</option>
+              <option value="schedule">Schedule — items with a date &amp; time</option>
+              <option value="collection">Collection — titles with a note (e.g. books, films)</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="sec-submit">Add section</button>
+            <button type="button" id="sec-cancel" class="btn-secondary hidden">Cancel</button>
+          </div>
+        </form>
+      </div>
+      <h2 class="section-heading">Your sections</h2>
+      <div id="manage-list"></div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section id="view-settings" class="view hidden">
+      <div class="card">
+        <h2>Backup</h2>
+        <p class="hint">Everything lives on this device. Export a backup file you can keep safe or move to another device.</p>
+        <div class="backup-actions">
+          <button id="export-backup" class="btn-secondary">Export backup</button>
+          <label class="btn-secondary file-label">Import backup<input id="import-backup" type="file" accept="application/json" hidden /></label>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Voice input <span class="chip-optional">(beta)</span></h2>
+        <p class="hint" id="voice-hint">Add a 🎤 button to the daily check-in so you can speak instead of tap — it fills in your mood, energy and tags from what you say. Heads-up: on most browsers your speech is transcribed by a cloud service (e.g. Google), so audio briefly leaves your device while you record. It's off by default to keep Hima OS local-first.</p>
+        <label class="toggle-row"><input type="checkbox" id="voice-toggle" /> <span id="voice-status">Enable voice input</span></label>
+      </div>
+      <div class="card">
+        <h2>Starter sections</h2>
+        <p class="hint">Bring back the built-in starter sections. This only adds any that are missing — your existing sections and items are kept.</p>
+        <button type="button" id="restore-starters" class="btn-secondary">Restore starter sections</button>
+      </div>
+      <div class="card">
+        <span id="install-hint"></span>
+        <p id="app-version" class="hint"></p>
+      </div>
+    </section>
+  </main>
+
+  <div id="update-banner" class="update-banner hidden">
+    <span>A new version is available.</span>
+    <button type="button" id="update-reload" class="btn-primary">Reload</button>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script src="storage.js"></script>
+  <script src="donow-utils.js"></script>
+  <script src="checkin-utils.js"></script>
+  <script src="voice-utils.js"></script>
+  <script src="dreaming-utils.js"></script>
+  <script src="app.js"></script>
+  <script src="sw-register.js"></script>
+</body>
+</html>

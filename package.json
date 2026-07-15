@@ -1,0 +1,13 @@
+{
+  "name": "hima-os-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hima OS — an offline-first second-brain PWA that captures every list in its own section.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "python3 -m http.server 4173",
+    "test": "node --test"
+  }
+}
