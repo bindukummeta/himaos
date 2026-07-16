@@ -201,14 +201,20 @@ select:disabled { opacity: 0.6; }
 .dash-add #dash-add-section { flex: 1 1 auto; width: auto; }
 .dash-add .btn-primary { flex: 0 0 auto; }
 
+/* Open to-dos can grow long; cap the height and scroll so it never dominates
+   the dashboard. Roughly ~8 rows tall before scrolling kicks in. */
+#dash-todos { max-height: 360px; overflow-y: auto; }
+
 .mini-row { display: flex; align-items: center; gap: 10px; padding: 9px 2px; border-bottom: 1px solid var(--border); }
 .mini-row:last-child { border-bottom: none; }
 .mini-ico { font-size: 17px; width: 22px; text-align: center; }
 .mini-check {
   flex-shrink: 0; width: 24px; height: 24px; border-radius: 8px; cursor: pointer;
   border: 2px solid var(--border-strong); background: var(--card-2);
-  color: var(--accent-ink); font-size: 14px; font-weight: 800; line-height: 1;
+  color: var(--muted); font-size: 14px; font-weight: 800; line-height: 1;
 }
+.mini-check:hover { border-color: var(--accent); color: var(--accent-strong); }
+.mini-check:active { background: var(--accent-2); border-color: var(--accent-2); color: #05231b; transform: scale(0.94); }
 .mini-main { display: flex; flex-direction: column; min-width: 0; }
 .mini-title { font-weight: 600; font-size: 15px; }
 .mini-meta { font-size: 12px; color: var(--muted); }

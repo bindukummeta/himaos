@@ -257,8 +257,7 @@
 
     const todos = open
       .filter((i) => kindOf[i.sectionId] === "checklist")
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .slice(0, 8);
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
     $("dash-todos").innerHTML = todos.length
       ? todos.map((i) => dashRow(i, { tickable: true })).join("")
       : `<p class="empty">No open to-dos. 🎉</p>`;
