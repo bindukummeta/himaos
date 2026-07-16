@@ -232,6 +232,8 @@
     const checkins = await HimaStore.getCheckins();
     renderDashCheckin(checkins);
 
+    renderDashAddSections();
+
     await refreshGoals();
     await renderDashOneThing();
 
@@ -258,7 +260,7 @@
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .slice(0, 8);
     $("dash-todos").innerHTML = todos.length
-      ? todos.map((i) => dashRow(i)).join("")
+      ? todos.map((i) => dashRow(i, { tickable: true })).join("")
       : `<p class="empty">No open to-dos. 🎉</p>`;
 
     $("dash-sections").innerHTML = sections.map((s) => {
@@ -305,14 +307,53 @@
     $("one-thing-sub").textContent = `${what} — toward “${pick.goal.title}”`;
     tile.classList.remove("hidden");
   }
-  function dashRow(i) {
+  function dashRow(i, opts) {
+    opts = opts || {};
     const sec = sectionById(i.sectionId);
     const when = fmtWhen(i);
     const meta = [when, i.note].filter(Boolean).join(" · ");
-    return `<div class="mini-row">
-      <span class="mini-ico">${esc(sec ? sec.icon : "•")}</span>
+    // Tickable rows (Open to-dos) get a check button so they can be marked done
+    // straight from the dashboard, mirroring the section list's toggle.
+    const check = opts.tickable
+      ? `<button class="mini-check" data-act="dash-toggle" aria-label="Mark done">✓</button>`
+      : `<span class="mini-ico">${esc(sec ? sec.icon : "•")}</span>`;
+    return `<div class="mini-row" data-id="${esc(i.id)}">
+      ${check}
       <span class="mini-main"><span class="mini-title">${esc(i.title)}</span>${meta ? `<span class="mini-meta">${esc(meta)}</span>` : ""}</span>
     </div>`;
+  }
+  // The dashboard quick-add category picker: every checklist/schedule/collection
+  // section, so a new item can be filed without leaving the dashboard. Keeps the
+  // previously chosen section selected across re-renders when it still exists.
+  function renderDashAddSections() {
+    const sel = $("dash-add-section");
+    if (!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = sections.map((s) =>
+      `<option value="${esc(s.id)}">${esc(s.icon || "📝")} ${esc(s.name)}</option>`
+    ).join("");
+    if (prev && sections.some((s) => s.id === prev)) sel.value = prev;
+  }
+  // Add an item to the chosen section from the dashboard. Schedule/collection
+  // sections just get a plain title here; richer fields stay in the section view.
+  async function submitDashAdd(e) {
+    e.preventDefault();
+    const title = ($("dash-add-title").value || "").trim();
+    if (!title) { $("dash-add-title").focus(); return; }
+    const sectionId = $("dash-add-section").value;
+    if (!sectionId) { toast("Add a section first from Manage sections."); return; }
+    await HimaStore.addItem({ sectionId, title });
+    $("dash-add-title").value = "";
+    toast("Added ✨");
+    renderDashboard();
+  }
+  async function onDashTodosClick(e) {
+    const btn = e.target.closest('[data-act="dash-toggle"]');
+    const row = e.target.closest(".mini-row");
+    if (!btn || !row) return;
+    await HimaStore.updateItem(row.dataset.id, { done: 1, doneAt: Date.now() });
+    toast("Done — nice. ✨");
+    renderDashboard();
   }
 
   // ============ DO NOW ============
@@ -1154,6 +1195,8 @@
     $("sec-cancel").addEventListener("click", () => { resetSectionForm(); });
     $("manage-list").addEventListener("click", onManageClick);
 
+    $("dash-add-form").addEventListener("submit", submitDashAdd);
+    $("dash-todos").addEventListener("click", onDashTodosClick);
     $("dash-donow").addEventListener("click", () => showView("donow"));
     $("donow-mins").addEventListener("click", onDoNowFilterClick);
     $("donow-energy").addEventListener("click", onDoNowFilterClick);
