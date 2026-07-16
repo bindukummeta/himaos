@@ -327,3 +327,74 @@ select:disabled { opacity: 0.6; }
   padding: 10px 18px; border-radius: var(--r-pill); font-size: 14px; font-weight: 600;
   box-shadow: var(--shadow-lg);
 }
+
+/* ---- Goals + weekly review (Step 4) ---- */
+/* "One thing that matters" dashboard tile — teal to set it apart from Do Now. */
+.one-thing {
+  display: flex; align-items: center; gap: 14px; width: 100%; cursor: pointer; text-align: left;
+  background: var(--accent-2); color: var(--accent-ink); border: none; border-radius: var(--r-lg);
+  padding: 16px 18px; margin-bottom: 12px; box-shadow: var(--shadow);
+}
+.one-thing:active { transform: scale(0.99); }
+.one-thing-ico { font-size: 26px; line-height: 1; }
+.one-thing-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.one-thing-title { font-weight: 800; font-size: 17px; letter-spacing: -0.01em; }
+.one-thing-sub { font-size: 13px; font-weight: 500; opacity: 0.92; }
+
+/* Vision banner — the north-star card, tinted with the accent. */
+.vision-banner { background: color-mix(in srgb, var(--accent) 10%, var(--card)); }
+.vision-text { font-size: 17px; font-weight: 700; line-height: 1.35; }
+.vision-note { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.vision-set .btn-link { margin-top: 8px; }
+
+/* Weekly review panel — tinted teal (a gentler, celebratory surface). */
+.review-panel { background: color-mix(in srgb, var(--accent-2) 8%, var(--card)); }
+.review-row { padding: 12px 0; border-top: 1px solid var(--border); }
+.review-row:first-of-type { border-top: none; }
+.review-title { font-weight: 700; font-size: 15px; }
+.review-line { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.review-suggest { font-size: 13px; margin-top: 6px; }
+.review-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.review-actions .btn-secondary { padding: 7px 12px; font-size: 13px; }
+.review-ontrack { color: var(--accent-2); font-weight: 700; }
+
+/* Horizon group headings reuse the collection-heading look. */
+.horizon-heading {
+  margin: 18px 2px 8px; font-size: 13px; font-weight: 700; letter-spacing: 0.02em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+/* Goal cards + their embedded weekly activities. */
+.goal-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg);
+  padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm);
+}
+.goal-head { display: flex; align-items: flex-start; gap: 10px; }
+.goal-head-main { flex: 1; min-width: 0; }
+.goal-title { font-weight: 700; font-size: 16px; word-break: break-word; }
+.goal-note { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.goal-status-pill {
+  flex-shrink: 0; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: var(--r-pill);
+  background: var(--card-2); color: var(--muted); border: 1px solid var(--border-strong);
+}
+.goal-status-pill.done { background: var(--accent-2); color: #05231b; border-color: var(--accent-2); }
+.goal-status-pill.paused { background: var(--card-2); color: var(--muted); }
+.goal-progress { height: 8px; border-radius: var(--r-pill); background: var(--card-2); overflow: hidden; margin: 10px 0 4px; }
+.goal-progress-bar { height: 100%; background: var(--accent); border-radius: var(--r-pill); transition: width 0.25s ease; }
+.goal-progress-label { font-size: 12px; color: var(--muted); }
+.goal-activities { margin-top: 10px; }
+.goal-activity {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border);
+}
+.activity-check {
+  flex-shrink: 0; width: 24px; height: 24px; border-radius: 7px; cursor: pointer;
+  border: 2px solid var(--border-strong); background: var(--card-2);
+  color: #05231b; font-size: 14px; font-weight: 800; line-height: 1;
+}
+.goal-activity.done .activity-check { background: var(--accent-2); border-color: var(--accent-2); }
+.activity-title { flex: 1; min-width: 0; font-size: 14px; word-break: break-word; }
+.goal-activity.done .activity-title { color: var(--muted); }
+.add-activity { display: flex; gap: 8px; margin-top: 10px; }
+.add-activity input { flex: 1; }
+.add-activity .btn-secondary { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
+.goal-linked { font-size: 12px; color: var(--muted); margin-top: 8px; }

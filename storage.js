@@ -8,8 +8,8 @@
   "use strict";
 
   const DB_NAME = "hima-os";
-  const DB_VERSION = 2;
-  const STORES = { sections: "sections", items: "items", meta: "meta", checkins: "checkins" };
+  const DB_VERSION = 3;
+  const STORES = { sections: "sections", items: "items", meta: "meta", checkins: "checkins", goals: "goals" };
 
   // Built-in starter sections. Stable ids/keys so future cross-links survive.
   // `kind` drives which fields and controls the UI shows for a section.
@@ -73,6 +73,15 @@
           const s = db.createObjectStore(STORES.checkins, { keyPath: "id" });
           s.createIndex("date", "date", { unique: false });
           s.createIndex("at", "at", { unique: false });
+        }
+        // Goals ladder (Step 4): Vision -> year/quarter goals. Weekly activities
+        // are embedded on each goal record; no separate store. `horizon`/`status`
+        // indexed for future queries; no seed data (goals are user-authored).
+        if (!db.objectStoreNames.contains(STORES.goals)) {
+          const s = db.createObjectStore(STORES.goals, { keyPath: "id" });
+          s.createIndex("horizon", "horizon", { unique: false });
+          s.createIndex("status", "status", { unique: false });
+          s.createIndex("order", "order", { unique: false });
         }
       };
       req.onsuccess = () => resolve(req.result);
@@ -157,6 +166,7 @@
     let rows = await reqP(store.getAll());
     if (filter.sectionId) rows = rows.filter((r) => r.sectionId === filter.sectionId);
     if (typeof filter.done === "number") rows = rows.filter((r) => (r.done ? 1 : 0) === filter.done);
+    if (filter.goalId) rows = rows.filter((r) => r.goalId === filter.goalId);
     return rows;
   }
   async function getItem(id) {
@@ -169,7 +179,8 @@
       // minutes/energy are optional task attributes used by the "Do Now" picker.
       // null = untagged. minutes is a number (5/15/30/60/120); energy is low/med/high.
       // link is an optional URL for collection items (e.g. a place or trailer).
-      { id: uid(), title: "", note: "", link: null, done: 0, doneAt: null, date: null, time: null, minutes: null, energy: null, order: now, createdAt: now, updatedAt: now },
+      // goalId (Step 4) optionally links a checklist task up to the goal it serves.
+      { id: uid(), title: "", note: "", link: null, goalId: null, done: 0, doneAt: null, date: null, time: null, minutes: null, energy: null, order: now, createdAt: now, updatedAt: now },
       rec
     );
     const store = await tx(STORES.items, "readwrite");
@@ -227,6 +238,88 @@
     return reqP(store.delete(id));
   }
 
+  // ---- goals (Step 4: Vision -> year/quarter goals, embedded weekly activities) ----
+  async function getGoals(filter) {
+    filter = filter || {};
+    const store = await tx(STORES.goals, "readonly");
+    let rows = await reqP(store.getAll());
+    if (filter.horizon) rows = rows.filter((r) => r.horizon === filter.horizon);
+    if (filter.status) rows = rows.filter((r) => r.status === filter.status);
+    return rows.sort((a, b) => (a.order || 0) - (b.order || 0) || (a.createdAt || 0) - (b.createdAt || 0));
+  }
+  async function getGoal(id) {
+    const store = await tx(STORES.goals, "readonly");
+    return reqP(store.get(id));
+  }
+  async function addGoal(rec) {
+    const now = Date.now();
+    const record = Object.assign(
+      // horizon: vision|year|quarter; status: active|paused|done. activities are
+      // embedded {id,title,doneWeeks[]} ticked per ISO week. parentId reserved.
+      { id: uid(), title: "", note: "", horizon: "quarter", status: "active", parentId: null, snoozedWeek: null, activities: [], order: now, createdAt: now, updatedAt: now },
+      rec
+    );
+    const store = await tx(STORES.goals, "readwrite");
+    await reqP(store.put(record));
+    return record;
+  }
+  async function updateGoal(id, patch) {
+    const store = await tx(STORES.goals, "readonly");
+    const cur = await reqP(store.get(id));
+    if (!cur) return null;
+    const record = Object.assign({}, cur, patch, { updatedAt: Date.now() });
+    const rw = await tx(STORES.goals, "readwrite");
+    await reqP(rw.put(record));
+    return record;
+  }
+  async function deleteGoal(id) {
+    // Never cascade-delete the user's tasks — just unlink any that pointed here.
+    const linked = await getItems({ goalId: id });
+    for (const it of linked) await updateItem(it.id, { goalId: null });
+    const store = await tx(STORES.goals, "readwrite");
+    return reqP(store.delete(id));
+  }
+  async function reorderGoals(orderedIds) {
+    for (let i = 0; i < orderedIds.length; i++) {
+      await updateGoal(orderedIds[i], { order: i + 1 });
+    }
+    return true;
+  }
+  // Embedded activity ops: read the goal, mutate its activities, persist.
+  async function addActivity(goalId, rec) {
+    const g = await getGoal(goalId);
+    if (!g) return null;
+    const activity = Object.assign({ id: uid(), title: "", doneWeeks: [], createdAt: Date.now() }, rec);
+    const activities = (g.activities || []).concat([activity]);
+    await updateGoal(goalId, { activities });
+    return activity;
+  }
+  async function updateActivity(goalId, activityId, patch) {
+    const g = await getGoal(goalId);
+    if (!g) return null;
+    const activities = (g.activities || []).map((a) => (a.id === activityId ? Object.assign({}, a, patch) : a));
+    return updateGoal(goalId, { activities });
+  }
+  async function deleteActivity(goalId, activityId) {
+    const g = await getGoal(goalId);
+    if (!g) return null;
+    const activities = (g.activities || []).filter((a) => a.id !== activityId);
+    return updateGoal(goalId, { activities });
+  }
+  // Toggle an activity's completion for a given ISO week key (add/remove the key).
+  async function toggleActivityWeek(goalId, activityId, weekKey) {
+    const g = await getGoal(goalId);
+    if (!g) return null;
+    const activities = (g.activities || []).map((a) => {
+      if (a.id !== activityId) return a;
+      const weeks = Array.isArray(a.doneWeeks) ? a.doneWeeks.slice() : [];
+      const at = weeks.indexOf(weekKey);
+      if (at >= 0) weeks.splice(at, 1); else weeks.push(weekKey);
+      return Object.assign({}, a, { doneWeeks: weeks });
+    });
+    return updateGoal(goalId, { activities });
+  }
+
   // ---- meta ----
   async function getMeta(key) {
     const store = await tx(STORES.meta, "readonly");
@@ -243,7 +336,8 @@
     const sections = await getSections();
     const items = await getItems();
     const checkins = await getCheckins();
-    return { app: "hima-os", version: DB_VERSION, exportedAt: Date.now(), sections, items, checkins };
+    const goals = await getGoals();
+    return { app: "hima-os", version: DB_VERSION, exportedAt: Date.now(), sections, items, checkins, goals };
   }
   async function clearStore(name) {
     const store = await tx(name, "readwrite");
@@ -254,6 +348,7 @@
     await clearStore(STORES.sections);
     await clearStore(STORES.items);
     await clearStore(STORES.checkins);
+    await clearStore(STORES.goals);
     for (const s of payload.sections || []) {
       const store = await tx(STORES.sections, "readwrite");
       await reqP(store.put(s));
@@ -265,6 +360,10 @@
     for (const c of payload.checkins || []) {
       const store = await tx(STORES.checkins, "readwrite");
       await reqP(store.put(c));
+    }
+    for (const g of payload.goals || []) {
+      const store = await tx(STORES.goals, "readwrite");
+      await reqP(store.put(g));
     }
     return true;
   }
@@ -280,6 +379,8 @@
     getSections, getSection, addSection, updateSection, deleteSection, reorderSections, restoreStarters,
     getItems, getItem, addItem, updateItem, deleteItem, clearDone,
     getCheckins, getCheckin, addCheckin, deleteCheckin,
+    getGoals, getGoal, addGoal, updateGoal, deleteGoal, reorderGoals,
+    addActivity, updateActivity, deleteActivity, toggleActivityWeek,
     getMeta, setMeta,
     exportAll, importAll,
   };

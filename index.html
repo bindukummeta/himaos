@@ -27,6 +27,7 @@
       <li><button class="nav-item" data-view="dashboard"><span class="nav-ico">🏠</span><span class="nav-label">Dashboard</span></button></li>
       <li><button class="nav-item" data-view="donow"><span class="nav-ico">⚡</span><span class="nav-label">Do Now</span></button></li>
       <li><button class="nav-item" data-view="checkin"><span class="nav-ico">💗</span><span class="nav-label">Daily check-in</span></button></li>
+      <li><button class="nav-item" data-view="goals"><span class="nav-ico">🎯</span><span class="nav-label">Goals</span></button></li>
     </ul>
     <p class="nav-heading">Sections</p>
     <ul class="nav-list" id="nav-sections"></ul>
@@ -40,6 +41,14 @@
     <!-- ============ DASHBOARD ============ -->
     <section id="view-dashboard" class="view hidden">
       <div class="card kid-greeting"><h2 id="dash-greeting">Welcome back 👋</h2><p class="hint" id="dash-date"></p></div>
+      <button type="button" id="dash-one-thing" class="one-thing hidden">
+        <span class="one-thing-ico">⭐</span>
+        <span class="one-thing-main">
+          <span class="one-thing-title" id="one-thing-title">One thing that matters today</span>
+          <span class="one-thing-sub" id="one-thing-sub"></span>
+        </span>
+        <span class="donow-cta-arrow">→</span>
+      </button>
       <button type="button" id="dash-checkin" class="checkin-cta">
         <span class="checkin-cta-ico" id="dash-checkin-ico">💗</span>
         <span class="checkin-cta-main">
@@ -124,6 +133,51 @@
       </div>
       <h2 class="section-heading">Today</h2>
       <div id="checkin-today"></div>
+    </section>
+
+    <!-- ============ GOALS + WEEKLY REVIEW ============ -->
+    <section id="view-goals" class="view hidden">
+      <div class="section-head">
+        <h2>🎯 Goals</h2>
+        <span id="goals-count" class="count-badge"></span>
+      </div>
+      <p class="hint">Your ladder: a north-star vision, the goals that serve it this year and quarter, and the small weekly activities that get you there.</p>
+
+      <div class="card vision-banner">
+        <div id="vision-display"></div>
+        <form id="vision-form" autocomplete="off">
+          <div class="field"><label for="vf-title">Your vision <span class="chip-optional">(5–10 years)</span></label><input id="vf-title" placeholder="e.g. Live a healthy, creative life on my own terms" /></div>
+          <div class="field"><input id="vf-note" placeholder="Why it matters (optional)" /></div>
+          <div class="form-actions">
+            <button type="submit" class="btn-secondary" id="vision-submit">Save vision</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card review-panel">
+        <h2>This week's review</h2>
+        <p class="hint">Progress compounds. Behind on something? That's fine — move it or shrink it, never scrap it.</p>
+        <div id="review-body"></div>
+      </div>
+
+      <div class="card">
+        <h2 id="goal-form-title">Add a goal</h2>
+        <form id="goal-form" autocomplete="off">
+          <input type="hidden" id="goal-id" />
+          <div class="field"><input id="gf-title" required placeholder="e.g. Run a half-marathon" /></div>
+          <div class="field"><input id="gf-note" placeholder="Note (optional)" /></div>
+          <div class="field chip-field">
+            <label>Horizon</label>
+            <div id="gf-horizon-field"></div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="goal-submit">Add goal</button>
+            <button type="button" id="goal-cancel" class="btn-secondary hidden">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="goals-list"></div>
     </section>
 
     <!-- ============ SECTION (generic) ============ -->
@@ -214,6 +268,7 @@
   <script src="checkin-utils.js"></script>
   <script src="voice-utils.js"></script>
   <script src="dreaming-utils.js"></script>
+  <script src="goals-utils.js"></script>
   <script src="app.js"></script>
   <script src="sw-register.js"></script>
 </body>

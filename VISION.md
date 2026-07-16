@@ -69,10 +69,15 @@ Positioning: lead with the universal promise; broad in *who*, sharp in *how*.
       (Dreaming starters + `dreaming` flag; Someday/Lived ✨ split with lived/someday
       counts; optional link per item; celebratory "lived" state instead of strike-through;
       `dreaming-utils` + unit tests done.)
-- [ ] **Step 4 — Goals + weekly review.** Vision (5–10y) → yearly/quarterly goals
+- [x] **Step 4 — Goals + weekly review.** Vision (5–10y) → yearly/quarterly goals
       → daily/weekly activities. Link tasks/habits up to the goal they serve.
       Morning "one thing that matters" nudge; weekly "here's your compounded
       progress, let's adjust" review. Daily earns retention; weekly earns belief.
+      (Vision banner + year/quarter goal cards; embedded weekly activities ticked
+      per ISO week + optional `goalId` linking checklist tasks, dual progress
+      rollup; dashboard "one thing" nudge via `pickOneThing`; guilt-free review
+      with move/snooze; `goals` store — DB v3 — in backup; `goals-utils` + unit
+      tests done.)
 - [ ] **Step 5 — Pattern insights.** Overlay the daily log on rhythms to reveal,
       side by side: trigger clusters (universal) and — if enabled — cycle windows.
       Reflect-not-diagnose. This is arguably the app's most valuable output.
@@ -96,6 +101,8 @@ Positioning: lead with the universal promise; broad in *who*, sharp in *how*.
 ## Tech snapshot (for a new session to orient)
 
 - Vanilla HTML/CSS/JS, no build step; PWA (service worker + manifest); IndexedDB.
-- `storage.js` = `HimaStore` seam (sections/items/meta). `donow-utils.js` = pure,
-  tested Do Now logic (shared by app + `node --test`). `app.js` = routing + views.
+- `storage.js` = `HimaStore` seam (sections/items/checkins/goals/meta; DB v3).
+  Pure, tested logic modules shared by app + `node --test`: `donow-utils`,
+  `checkin-utils`, `voice-utils`, `dreaming-utils`, `goals-utils`. `app.js` =
+  routing + views.
 - Matches the style of sibling apps (`education-planner-app`, `summer-holidays-app`).
