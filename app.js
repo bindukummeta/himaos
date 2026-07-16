@@ -36,6 +36,45 @@
   } = window.GoalsUtils;
   const HORIZON_LABEL = {};
   GOAL_HORIZONS.forEach((h) => { HORIZON_LABEL[h.val] = h.label; });
+  // ---- private usage tracking (dogfooding retention, Step-4.5) ----
+  // Pure date/summary logic lives in usage-utils.js. Recording is SILENT and
+  // fully on-device; the summary is shown only when explicitly requested in
+  // Settings, so the metric can't nudge behaviour and distort itself.
+  const { dayKey, markDay, usageSummary, WINDOW_DAYS } = window.UsageUtils;
+  // The two recorded day-lists live in meta under these keys.
+  const USAGE_OPEN = "usageOpenDays";
+  const USAGE_ACTION = "usageActionDays";
+  // Names of HimaStore methods that represent a genuine user data change; any
+  // call to one stamps today as an "action day" (see wrapStoreForUsage).
+  const MUTATION_METHODS = [
+    "addItem", "updateItem", "deleteItem", "clearDone",
+    "addCheckin", "deleteCheckin",
+    "addGoal", "updateGoal", "deleteGoal",
+    "addActivity", "updateActivity", "deleteActivity", "toggleActivityWeek",
+  ];
+  // Append today to a meta day-list, but only when it isn't already there
+  // (markDay returns the same array by identity on a no-op → skip the write).
+  async function recordDay(metaKey) {
+    try {
+      const cur = (await HimaStore.getMeta(metaKey)) || [];
+      const next = markDay(cur, dayKey());
+      if (next !== cur) await HimaStore.setMeta(metaKey, next);
+    } catch (_) { /* usage tracking must never break the app */ }
+  }
+  // Wrap each mutation method once so every data change records an action day,
+  // with no scattered call-site edits to forget. Import restores from backup
+  // via importAll, which is deliberately NOT wrapped (a restore isn't "use").
+  function wrapStoreForUsage() {
+    MUTATION_METHODS.forEach((name) => {
+      const orig = HimaStore[name];
+      if (typeof orig !== "function") return;
+      HimaStore[name] = function () {
+        const out = orig.apply(HimaStore, arguments);
+        recordDay(USAGE_ACTION); // fire-and-forget; never blocks the mutation
+        return out;
+      };
+    });
+  }
   // Accept a bare "example.com" and turn it into a safe absolute http(s) link,
   // or null if it clearly isn't a web link. Keeps javascript: etc. out.
   function normalizeLink(raw) {
@@ -1058,6 +1097,20 @@
     }
     e.target.value = "";
   }
+  // On-demand, private usage summary — the ONLY place tracking is ever surfaced.
+  // Deliberately behind a button so it can't nudge behaviour during the window.
+  async function showUsageSummary() {
+    const openDays = (await HimaStore.getMeta(USAGE_OPEN)) || [];
+    const actionDays = (await HimaStore.getMeta(USAGE_ACTION)) || [];
+    const s = usageSummary(openDays, actionDays, dayKey(), WINDOW_DAYS);
+    const rate = s.openedDays ? Math.round(s.actionRate * 100) : 0;
+    const out = $("usage-output");
+    out.textContent =
+      `Last ${s.windowDays} days: you opened Hima OS on ${s.openedDays} day(s) ` +
+      `and actually did something on ${s.actionDays} of them (${rate}% of opens). ` +
+      `Current action streak: ${s.streak} day(s).`;
+    out.classList.remove("hidden");
+  }
   async function restoreStarters() {
     const added = await HimaStore.restoreStarters();
     await refreshSections();
@@ -1074,6 +1127,10 @@
   }
   async function init() {
     await HimaStore.ready();
+    // Silent, on-device usage recording: stamp today as an "open day", and wrap
+    // store mutations so any data change stamps an "action day" (see above).
+    wrapStoreForUsage();
+    recordDay(USAGE_OPEN);
     await refreshSections();
     await refreshGoals();
 
@@ -1121,6 +1178,7 @@
     $("export-backup").addEventListener("click", exportBackup);
     $("import-backup").addEventListener("change", importBackup);
     $("restore-starters").addEventListener("click", restoreStarters);
+    $("show-usage").addEventListener("click", showUsageSummary);
 
     // Dashboard cards + section shortcuts open the matching section.
     document.querySelector("main").addEventListener("click", (e) => {

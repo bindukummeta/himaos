@@ -1,4 +1,4 @@
-const CACHE = "hima-os-v6";
+const CACHE = "hima-os-v7";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,6 +9,7 @@ const ASSETS = [
   "./voice-utils.js",
   "./dreaming-utils.js",
   "./goals-utils.js",
+  "./usage-utils.js",
   "./app.js",
   "./sw-register.js",
   "./manifest.webmanifest",

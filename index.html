@@ -250,6 +250,12 @@
         <button type="button" id="restore-starters" class="btn-secondary">Restore starter sections</button>
       </div>
       <div class="card">
+        <h2>My usage <span class="chip-optional">(private)</span></h2>
+        <p class="hint">A quiet, on-device check on your own habit — how many of the last two weeks you actually used Hima OS. Nothing is recorded off this device, and this is the only place it's ever shown, so it can't nudge you while you're settling in.</p>
+        <button type="button" id="show-usage" class="btn-secondary">Show my usage</button>
+        <p id="usage-output" class="hint hidden"></p>
+      </div>
+      <div class="card">
         <span id="install-hint"></span>
         <p id="app-version" class="hint"></p>
       </div>
@@ -269,6 +275,7 @@
   <script src="voice-utils.js"></script>
   <script src="dreaming-utils.js"></script>
   <script src="goals-utils.js"></script>
+  <script src="usage-utils.js"></script>
   <script src="app.js"></script>
   <script src="sw-register.js"></script>
 </body>
