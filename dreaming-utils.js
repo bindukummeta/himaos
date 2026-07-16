@@ -41,6 +41,47 @@
     return section.dreaming === true || DREAM_KEYS.indexOf(section.key) >= 0;
   }
 
+  // Known reading collections that get the "Currently reading / Finished" split.
+  const READING_KEYS = ["reading-now", "want-to-read"];
+
+  // A "reading" section is a collection whose done items are *finished books*
+  // rather than *lived dreams* — same Someday/Achieved machinery, book wording.
+  // Detected by an explicit `reading: true` flag or a known reading key.
+  function isReadingSection(section) {
+    if (!section || section.kind !== "collection") return false;
+    return section.reading === true || READING_KEYS.indexOf(section.key) >= 0;
+  }
+
+  // Any collection that should use the two-bucket split view (open vs done).
+  function usesSplitView(section) {
+    return isDreamingSection(section) || isReadingSection(section);
+  }
+
+  // Wording for the split view, so books read "Currently reading / Finished 📚"
+  // and dreams read "Someday / Lived ✨". `livedPrefix` prefixes the done date.
+  function splitLabels(section) {
+    if (isReadingSection(section)) {
+      return {
+        someday: "Currently reading",
+        achieved: "Finished 📚",
+        livedPrefix: "Finished",
+        checkGlyph: "📚",
+        checkLabel: "Mark as finished",
+        emptyHint: "Nothing here yet — add your first book above. 📖",
+        doneToast: "Finished it. 📚",
+      };
+    }
+    return {
+      someday: "Someday",
+      achieved: "Lived ✨",
+      livedPrefix: "Lived",
+      checkGlyph: "✨",
+      checkLabel: "Mark as lived",
+      emptyHint: "Nothing here yet — add your first dream above. 🌠",
+      doneToast: "Lived it. ✨",
+    };
+  }
+
   // A collection item is "achieved" when its done flag is truthy — a dream you
   // have lived. Kept as a helper so callers don't reach into the flag directly.
   function isAchieved(item) {
@@ -69,5 +110,9 @@
     return { someday, achieved };
   }
 
-  return { DREAM_STARTERS, DREAM_KEYS, isDreamingSection, isAchieved, collectionStats, splitCollection };
+  return {
+    DREAM_STARTERS, DREAM_KEYS, READING_KEYS,
+    isDreamingSection, isReadingSection, usesSplitView, splitLabels,
+    isAchieved, collectionStats, splitCollection,
+  };
 });

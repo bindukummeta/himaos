@@ -27,7 +27,7 @@
   }
   // ---- dreaming collections (Step 3) ----
   // Pure split/stats logic lives in dreaming-utils.js; rendering stays here.
-  const { isDreamingSection, isAchieved, collectionStats, splitCollection } = window.DreamingUtils;
+  const { isDreamingSection, isReadingSection, usesSplitView, splitLabels, isAchieved, collectionStats, splitCollection } = window.DreamingUtils;
   // ---- goals + weekly review (Step 4) ----
   // Pure ladder/rollup/review logic lives in goals-utils.js; rendering stays here.
   const {
@@ -861,18 +861,22 @@
   function itemRow(i, kind, opts) {
     opts = opts || {};
     const dreaming = opts.dreaming === true;
+    // Optional per-section wording (dreams vs books); falls back to dream defaults.
+    const L = opts.labels || null;
     const when = kind === "schedule" ? fmtWhen(i) : "";
     const tags = kind === "checklist" ? taskTags(i) : "";
-    // On dreaming collections, an achieved item shows when it was lived.
-    const lived = dreaming && i.done && i.doneAt ? "Lived " + fmtStamp(i.doneAt) : "";
+    // On split collections, a done item shows when it was completed.
+    const donePrefix = L ? L.livedPrefix : "Lived";
+    const lived = dreaming && i.done && i.doneAt ? donePrefix + " " + fmtStamp(i.doneAt) : "";
     const meta = [when, tags, i.note, lived].filter(Boolean).join(" · ");
     // Collections show an optional link as its own clickable line (safe href).
     const link = kind === "collection" && i.link
       ? `<a class="item-link" href="${esc(i.link)}" target="_blank" rel="noopener noreferrer">${esc(prettyLink(i.link))} ↗</a>`
       : "";
-    // Dreaming collections reframe the tick as "mark as lived ✨".
-    const checkGlyph = i.done ? (dreaming ? "✨" : "✓") : "";
-    const checkLabel = dreaming ? "Mark as lived" : "Toggle done";
+    // Split collections reframe the tick (dreams: "mark as lived ✨"; books: "finished 📚").
+    const doneGlyph = L ? L.checkGlyph : "✨";
+    const checkGlyph = i.done ? (dreaming ? doneGlyph : "✓") : "";
+    const checkLabel = dreaming ? (L ? L.checkLabel : "Mark as lived") : "Toggle done";
     return `<div class="item-row${i.done ? " done" : ""}${dreaming ? " dream" : ""}" data-id="${esc(i.id)}">
       <button class="item-check" data-act="toggle" aria-label="${esc(checkLabel)}">${checkGlyph}</button>
       <div class="item-main" data-act="edit">
@@ -901,23 +905,26 @@
     if (editingItemId === null) resetItemForm(section);
 
     const items = await HimaStore.getItems({ sectionId: section.id });
-    const dreaming = isDreamingSection(section);
 
-    if (dreaming) {
-      // Dreaming collections read as a wishlist: count lived vs still-to-live,
-      // and split the list into "Someday" and a celebratory "Lived ✨" section.
+    if (usesSplitView(section)) {
+      // Dreaming/reading collections split into an "open" bucket and a
+      // celebratory "done" bucket, with wording tuned per section (dreams are
+      // "Someday/Lived ✨"; books are "Currently reading/Finished 📚").
+      const L = splitLabels(section);
+      const reading = isReadingSection(section);
       const stats = collectionStats(items);
       $("section-count").textContent = stats.total
-        ? `${stats.achieved} lived · ${stats.someday} someday`
+        ? `${stats.achieved} ${reading ? "finished" : "lived"} · ${stats.someday} ${reading ? "reading" : "someday"}`
         : "";
-      $("section-empty-hint").textContent = stats.total ? "" : "Nothing here yet — add your first dream above. 🌠";
+      $("section-empty-hint").textContent = stats.total ? "" : L.emptyHint;
       const { someday, achieved } = splitCollection(items);
+      const rowOpts = { dreaming: true, labels: L };
       const block = (label, rows) => rows.length
-        ? `<h3 class="collection-heading">${esc(label)}</h3>` + rows.map((i) => itemRow(i, section.kind, { dreaming: true })).join("")
+        ? `<h3 class="collection-heading">${esc(label)}</h3>` + rows.map((i) => itemRow(i, section.kind, rowOpts)).join("")
         : "";
       $("items-list").innerHTML =
-        block("Someday", someday) +
-        block("Lived ✨", achieved);
+        block(L.someday, someday) +
+        block(L.achieved, achieved);
       $("section-toolbar").innerHTML = "";
       return;
     }
@@ -975,8 +982,10 @@
       const it = await HimaStore.getItem(id);
       const nowDone = !(it && it.done);
       await HimaStore.updateItem(id, { done: nowDone ? 1 : 0, doneAt: nowDone ? Date.now() : null });
-      // Celebrate living a dream (only when newly marked on a dreaming section).
-      if (nowDone && isDreamingSection(sectionById(currentSectionId))) toast("Lived it. ✨");
+      // Celebrate completing a split-collection item (dreams: "Lived it. ✨";
+      // books: "Finished it. 📚"), only when newly marked done.
+      const sec = sectionById(currentSectionId);
+      if (nowDone && usesSplitView(sec)) toast(splitLabels(sec).doneToast);
       renderSection();
     } else if (act === "del") {
       const it = await HimaStore.getItem(id);
@@ -1020,7 +1029,7 @@
         <span class="manage-ico">${esc(s.icon || "📝")}</span>
         <span class="manage-main">
           <span class="manage-name">${esc(s.name)}</span>
-          <span class="manage-sub">${esc(isDreamingSection(s) ? "Dreaming collection" : (KIND_LABEL[s.kind] || s.kind))} · ${counts[s.id] || 0} items</span>
+          <span class="manage-sub">${esc(isDreamingSection(s) ? "Dreaming collection" : isReadingSection(s) ? "Reading collection" : (KIND_LABEL[s.kind] || s.kind))} · ${counts[s.id] || 0} items</span>
         </span>
         <span class="manage-actions">
           <button class="icon-btn" data-act="up" ${idx === 0 ? "disabled" : ""} aria-label="Move up">↑</button>

@@ -18,8 +18,8 @@
     { id: "sec-schedule", key: "schedule", name: "Schedule", icon: "🗓️", kind: "schedule", order: 2 },
     { id: "sec-home", key: "home", name: "Home to-dos", icon: "🏠", kind: "checklist", order: 3 },
     { id: "sec-work", key: "work", name: "Work to-dos", icon: "💼", kind: "checklist", order: 4 },
-    { id: "sec-reading-now", key: "reading-now", name: "Reading now", icon: "📖", kind: "collection", order: 5 },
-    { id: "sec-want-to-read", key: "want-to-read", name: "Want to read", icon: "📚", kind: "collection", order: 6 },
+    { id: "sec-reading-now", key: "reading-now", name: "Reading now", icon: "📖", kind: "collection", reading: true, order: 5 },
+    { id: "sec-want-to-read", key: "want-to-read", name: "Want to read", icon: "📚", kind: "collection", reading: true, order: 6 },
     // Dreaming collections (Step 3): wishes rather than chores. `dreaming: true`
     // switches on the Someday/Achieved split UI; still plain `collection` stores.
     { id: "sec-bucket-list", key: "bucket-list", name: "Bucket list", icon: "🌠", kind: "collection", dreaming: true, order: 7 },

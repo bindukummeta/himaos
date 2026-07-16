@@ -5,7 +5,8 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
-  DREAM_STARTERS, isDreamingSection, isAchieved, collectionStats, splitCollection,
+  DREAM_STARTERS, isDreamingSection, isReadingSection, usesSplitView, splitLabels,
+  isAchieved, collectionStats, splitCollection,
 } = require("./dreaming-utils.js");
 
 // Build a collection item quickly. `done`/`doneAt` model the "achieved" state.
@@ -33,6 +34,34 @@ test("isDreamingSection: flag, known key, and negatives", () => {
   assert.equal(isDreamingSection({ kind: "collection", key: "want-to-read" }), false, "plain collection");
   assert.equal(isDreamingSection({ kind: "checklist", dreaming: true }), false, "non-collection never dreaming");
   assert.equal(isDreamingSection(null), false);
+});
+
+test("isReadingSection: flag, known key, and negatives", () => {
+  assert.equal(isReadingSection({ kind: "collection", reading: true }), true);
+  assert.equal(isReadingSection({ kind: "collection", key: "reading-now" }), true, "known key without flag");
+  assert.equal(isReadingSection({ kind: "collection", key: "want-to-read" }), true, "known key without flag");
+  assert.equal(isReadingSection({ kind: "collection", key: "bucket-list" }), false, "dreaming key is not reading");
+  assert.equal(isReadingSection({ kind: "checklist", reading: true }), false, "non-collection never reading");
+  assert.equal(isReadingSection(null), false);
+});
+
+test("usesSplitView is true for both dreaming and reading collections", () => {
+  assert.equal(usesSplitView({ kind: "collection", key: "bucket-list" }), true, "dreaming");
+  assert.equal(usesSplitView({ kind: "collection", key: "reading-now" }), true, "reading");
+  assert.equal(usesSplitView({ kind: "collection", key: "misc" }), false, "plain collection");
+  assert.equal(usesSplitView({ kind: "checklist" }), false, "checklist");
+});
+
+test("splitLabels: book wording for reading, dream wording otherwise", () => {
+  const reading = splitLabels({ kind: "collection", key: "reading-now" });
+  assert.equal(reading.someday, "Currently reading");
+  assert.equal(reading.doneToast, "Finished it. 📚");
+  assert.equal(reading.livedPrefix, "Finished");
+
+  const dream = splitLabels({ kind: "collection", key: "bucket-list" });
+  assert.equal(dream.someday, "Someday");
+  assert.equal(dream.doneToast, "Lived it. ✨");
+  assert.equal(dream.livedPrefix, "Lived");
 });
 
 test("isAchieved reflects the done flag", () => {
