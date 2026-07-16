@@ -211,10 +211,18 @@ select:disabled { opacity: 0.6; }
 .mini-check {
   flex-shrink: 0; width: 24px; height: 24px; border-radius: 8px; cursor: pointer;
   border: 2px solid var(--border-strong); background: var(--card-2);
-  color: var(--muted); font-size: 14px; font-weight: 800; line-height: 1;
+  color: var(--accent-strong); font-size: 14px; font-weight: 800; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
 }
-.mini-check:hover { border-color: var(--accent); color: var(--accent-strong); }
+/* Empty box at rest (like the section list); the ✓ only appears on hover/press
+   so an open to-do never looks pre-checked. */
+.mini-check::after { content: "✓"; opacity: 0; }
+.mini-check:hover { border-color: var(--accent); }
+.mini-check:hover::after { opacity: 0.55; }
 .mini-check:active { background: var(--accent-2); border-color: var(--accent-2); color: #05231b; transform: scale(0.94); }
+.mini-check:active::after { opacity: 1; }
+/* Fade a to-do out the moment it's ticked, before the list re-renders. */
+.mini-row.leaving { opacity: 0; transition: opacity 0.18s ease; }
 .mini-main { display: flex; flex-direction: column; min-width: 0; }
 .mini-title { font-weight: 600; font-size: 15px; }
 .mini-meta { font-size: 12px; color: var(--muted); }

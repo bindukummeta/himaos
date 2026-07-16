@@ -314,7 +314,7 @@
     // Tickable rows (Open to-dos) get a check button so they can be marked done
     // straight from the dashboard, mirroring the section list's toggle.
     const check = opts.tickable
-      ? `<button class="mini-check" data-act="dash-toggle" aria-label="Mark done">✓</button>`
+      ? `<button class="mini-check" data-act="dash-toggle" aria-label="Mark done"></button>`
       : `<span class="mini-ico">${esc(sec ? sec.icon : "•")}</span>`;
     return `<div class="mini-row" data-id="${esc(i.id)}">
       ${check}
@@ -350,9 +350,12 @@
     const btn = e.target.closest('[data-act="dash-toggle"]');
     const row = e.target.closest(".mini-row");
     if (!btn || !row) return;
+    // Instant feedback: fade the row out right away, then persist + re-render so
+    // it never lingers waiting on the async store write.
+    row.classList.add("leaving");
     await HimaStore.updateItem(row.dataset.id, { done: 1, doneAt: Date.now() });
     toast("Done — nice. ✨");
-    renderDashboard();
+    await renderDashboard();
   }
 
   // ============ DO NOW ============
