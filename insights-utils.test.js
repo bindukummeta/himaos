@@ -136,3 +136,108 @@ test("weightTrend windows to N days, computes delta and normalised spark", () =>
   assert.equal(t.spark[t.spark.length - 1].y, 0, "lowest kg maps to y=0");
   assert.equal(t.spark[0].y, 1, "highest kg maps to y=1");
 });
+
+// ---- render data-flow smoke tests ----
+// These exercise the three functions renderInsights()/renderDashInsights() call,
+// on one realistic multi-week corpus (the same shape HimaStore returns), and
+// assert the data the view consumes is well-formed. They don't touch the DOM —
+// they guard the seam between the pure logic and the (untested) render layer.
+
+// A ~6-week corpus: "late" eating trends with low energy AND bloating; "heavy"
+// meals cluster with bloating; a gentle downward weight drift.
+function realisticCorpus() {
+  const checkins = [], weights = [];
+  for (let i = 0; i < 30; i++) {
+    const date = "2026-06-" + String(i + 1).padStart(2, "0");
+    const at = i + 1;
+    const late = i % 2 === 0;           // 15 late days
+    const tags = [];
+    if (late) tags.push("late");
+    if (i % 3 === 0) tags.push("caffeine");
+    // On late days, more low energy + bloating; otherwise mostly fine.
+    const energy = late && i % 4 === 0 ? "low" : "high";
+    if (late && i % 5 === 0) tags.push("bloated");
+    const foodTags = i % 4 === 0 ? ["heavy"] : ["light"];
+    if (foodTags.indexOf("heavy") >= 0 && i % 8 === 0) tags.push("bloated");
+    checkins.push(ci({ id: "c" + i, date, at, mood: late ? 3 : 4, energy, tags, foodTags }));
+    if (i % 3 === 0) weights.push(w({ id: "wk" + i, date, at, kg: 72 - i * 0.05 }));
+  }
+  return { checkins, weights };
+}
+
+test("smoke: renderInsights data flow yields well-formed, reportable patterns", () => {
+  const { checkins } = realisticCorpus();
+  const patterns = findPatterns(checkins);
+  assert.ok(Array.isArray(patterns), "findPatterns returns an array");
+  // Every surfaced pattern must be reportable and carry the fields the view reads.
+  patterns.forEach((p) => {
+    assert.ok(p.withN >= MIN_DAYS && p.withoutN >= MIN_DAYS, "threshold held both sides");
+    assert.ok(INPUT_TAGS.some((t) => t.id === p.tagId), "tagId is a known input");
+    assert.ok(OUTCOMES.some((o) => o.id === p.outcomeId), "outcomeId is a known outcome");
+    assert.ok(p.withRate >= 0 && p.withRate <= 1, "withRate in [0,1]");
+    assert.ok(p.withoutRate >= 0 && p.withoutRate <= 1, "withoutRate in [0,1]");
+    assert.equal(typeof p.lift, "number");
+    assert.ok(p.withOut <= p.withN && p.withoutOut <= p.withoutN, "counts consistent");
+  });
+  // The dashboard card reads patterns[0]; it must exist and be the strongest.
+  assert.ok(patterns.length >= 1, "at least one pattern from a full corpus");
+  for (let i = 1; i < patterns.length; i++) {
+    assert.ok(Math.abs(patterns[i - 1].lift) >= Math.abs(patterns[i].lift), "sorted by |lift|");
+  }
+});
+
+test("smoke: bloatingClusters data flow ranks known inputs with sane rates", () => {
+  const { checkins } = realisticCorpus();
+  const data = bloatingClusters(checkins);
+  assert.equal(typeof data.totalDays, "number");
+  assert.ok(Array.isArray(data.rows));
+  // Rows (when present) must reference known inputs, be sorted, and have rates in range.
+  data.rows.forEach((r) => {
+    assert.ok(INPUT_TAGS.some((t) => t.id === r.tagId), "row tagId is a known input");
+    assert.ok(r.count > 0 && r.count <= data.totalDays, "count within total");
+    assert.ok(r.rate > 0 && r.rate <= 1, "rate in (0,1]");
+  });
+  for (let i = 1; i < data.rows.length; i++) {
+    assert.ok(data.rows[i - 1].count >= data.rows[i].count, "rows sorted by count desc");
+  }
+});
+
+test("smoke: weightTrend data flow gives the view drawable 30/90-day windows", () => {
+  const { weights } = realisticCorpus();
+  [30, 90].forEach((win) => {
+    const t = weightTrend(weights, win);
+    assert.ok(t.count >= 2, win + "d window has entries to draw");
+    assert.equal(typeof t.first, "number");
+    assert.equal(typeof t.last, "number");
+    assert.equal(t.delta, t.last - t.first);
+    // Sparkline coords the SVG builder consumes must be normalised into [0,1].
+    assert.equal(t.spark.length, t.count);
+    t.spark.forEach((s) => {
+      assert.ok(s.x >= 0 && s.x <= 1, "x normalised");
+      assert.ok(s.y >= 0 && s.y <= 1, "y normalised");
+    });
+    assert.equal(t.spark[0].x, 0);
+    assert.equal(t.spark[t.spark.length - 1].x, 1);
+  });
+});
+
+test("smoke: empty + sparse inputs degrade to safe 'keep logging' states", () => {
+  // No data anywhere: every consumer returns its empty shape, never throws.
+  assert.deepEqual(findPatterns([]), []);
+  const noBloat = bloatingClusters([]);
+  assert.equal(noBloat.totalDays, 0);
+  assert.deepEqual(noBloat.rows, []);
+  const noWeight = weightTrend([], 30);
+  assert.equal(noWeight.count, 0);
+  assert.equal(noWeight.delta, null);
+  assert.deepEqual(noWeight.spark, []);
+
+  // A single day of data is below every threshold -> nothing surfaces (no false
+  // "insight" from one point), and a lone weight can't form a drawable trend.
+  const one = [ci({ date: "2026-07-01", tags: ["late", "bloated"], energy: "low" })];
+  assert.deepEqual(findPatterns(one), []);
+  assert.deepEqual(bloatingClusters(one).rows, []);
+  const oneW = weightTrend([w({ date: "2026-07-01", at: 1, kg: 70 })], 30);
+  assert.equal(oneW.count, 1);
+  assert.equal(oneW.delta, 0, "single point has zero delta, first === last");
+});
