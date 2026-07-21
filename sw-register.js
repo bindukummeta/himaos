@@ -53,6 +53,15 @@
 
   if (reloadBtn) reloadBtn.addEventListener("click", activateUpdate);
 
+  // Ask the browser to re-fetch service-worker.js and check for a new version.
+  // Browsers only do this automatically on navigation, which an installed PWA
+  // rarely triggers — so without this the update banner may never appear.
+  function checkForUpdate() {
+    if (registration && registration.update) {
+      registration.update().catch(function () {});
+    }
+  }
+
   window.addEventListener("load", function () {
     navigator.serviceWorker.register("service-worker.js").then(function (reg) {
       registration = reg;
@@ -61,6 +70,14 @@
       reg.addEventListener("updatefound", function () {
         trackWorker(reg.installing);
       });
+      // Check once now, then again whenever the app is brought back to the
+      // foreground — this is what surfaces new versions on phones where the app
+      // stays installed and is resumed from the background rather than reloaded.
+      checkForUpdate();
     });
+  });
+
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") checkForUpdate();
   });
 })();
