@@ -50,16 +50,31 @@
   // all tags/foodTags seen that day, the lowest mood, and whether any moment was
   // low energy. Aggregating by day (not moment) is what makes a "day with X"
   // countable for correlation.
-  function summariseDays(checkins) {
+  //
+  // `healthDays` (optional) is a list of { date, tags:Set } as produced by
+  // health-utils.summariseHealthDays() — Phase C exercise/vitamin/med presence
+  // inputs. Its tags are merged into the matching day so health inputs correlate
+  // with outcomes exactly like check-in tags do, without insights-utils having
+  // to depend on health-utils. A health-only day (no check-in) still counts.
+  function summariseDays(checkins, healthDays) {
     const byDate = new Map();
+    function dayFor(date) {
+      let d = byDate.get(date);
+      if (!d) { d = { date: date, tags: new Set(), lowMood: false, lowEnergy: false }; byDate.set(date, d); }
+      return d;
+    }
     (checkins || []).forEach((c) => {
       if (!c || !c.date) return;
-      let d = byDate.get(c.date);
-      if (!d) { d = { date: c.date, tags: new Set(), lowMood: false, lowEnergy: false }; byDate.set(c.date, d); }
+      const d = dayFor(c.date);
       (c.tags || []).forEach((t) => d.tags.add(t));
       (c.foodTags || []).forEach((t) => d.tags.add(t));
       if (typeof c.mood === "number" && c.mood <= 2) d.lowMood = true;
       if (c.energy === "low") d.lowEnergy = true;
+    });
+    (healthDays || []).forEach((h) => {
+      if (!h || !h.date) return;
+      const d = dayFor(h.date);
+      (h.tags || []).forEach((t) => d.tags.add(t));
     });
     return Array.from(byDate.values()).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   }
@@ -94,10 +109,15 @@
 
   // All reportable input->outcome patterns, strongest absolute lift first. Only
   // patterns clearing MIN_DAYS on both sides are included.
-  function findPatterns(checkins) {
-    const days = summariseDays(checkins);
+  //
+  // `healthDays` merges Phase C inputs into each day (see summariseDays).
+  // `inputTags` overrides which inputs to test (default: the static INPUT_TAGS);
+  // the app passes an extended list so dynamic exercise/vitamin/med ids appear.
+  function findPatterns(checkins, healthDays, inputTags) {
+    const days = summariseDays(checkins, healthDays);
+    const tags = inputTags || INPUT_TAGS;
     const out = [];
-    INPUT_TAGS.forEach((tag) => {
+    tags.forEach((tag) => {
       OUTCOMES.forEach((oc) => {
         const r = correlate(days, tag.id, oc.id);
         if (r) out.push(r);
@@ -109,11 +129,12 @@
 
   // Among days tagged `bloated`, which inputs co-occur most often. Returns rows
   // sorted by co-occurrence count; empty until there are >= MIN_DAYS bloated days.
-  function bloatingClusters(checkins) {
-    const days = summariseDays(checkins);
+  function bloatingClusters(checkins, healthDays, inputTags) {
+    const days = summariseDays(checkins, healthDays);
+    const tags = inputTags || INPUT_TAGS;
     const bloatedDays = days.filter((d) => d.tags.has("bloated"));
     if (bloatedDays.length < MIN_DAYS) return { totalDays: bloatedDays.length, rows: [] };
-    const rows = INPUT_TAGS.map((tag) => {
+    const rows = tags.map((tag) => {
       const n = bloatedDays.filter((d) => d.tags.has(tag.id)).length;
       return { tagId: tag.id, count: n, rate: n / bloatedDays.length };
     }).filter((r) => r.count > 0).sort((a, b) => b.count - a.count);

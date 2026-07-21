@@ -85,7 +85,13 @@ Positioning: lead with the universal promise; broad in *who*, sharp in *how*.
       Phase B: an Insights view + dashboard card surfacing input→outcome patterns
       (mood/energy/bloating) with a ≥5-day threshold both sides, bloating
       co-occurrence clusters, and a 30/90-day weight sparkline — no goal line, no
-      red zones; `insights-utils` + unit tests done. Cycle windows deferred.)
+      red zones; `insights-utils` + unit tests done. Cycle windows deferred.
+      Phase C: a lightweight Health view — exercise (multi-select types), vitamins
+      (define-once list + daily tick), and medication (name + count) — DB v5, new
+      `health` store + vitamin defs in `meta`, both in backup. Health inputs fold
+      into the correlation engine as presence tags (`exercise:<id>` / `vit:<id>` /
+      `med:<name>`) via `health-utils`; meds correlate by presence (count kept for
+      later views), reflect-not-diagnose wording throughout. Unit tests done.)
 - [ ] **Step 6 — Coach (someday layer).** Start as a structured, rule-based
       companion (right question at the right time, entirely on-device). A
       conversational AI coach is a deliberate LATER fork — it must not break the
@@ -106,8 +112,8 @@ Positioning: lead with the universal promise; broad in *who*, sharp in *how*.
 ## Tech snapshot (for a new session to orient)
 
 - Vanilla HTML/CSS/JS, no build step; PWA (service worker + manifest); IndexedDB.
-- `storage.js` = `HimaStore` seam (sections/items/checkins/goals/meta; DB v3).
-  Pure, tested logic modules shared by app + `node --test`: `donow-utils`,
-  `checkin-utils`, `voice-utils`, `dreaming-utils`, `goals-utils`. `app.js` =
-  routing + views.
+- `storage.js` = `HimaStore` seam (sections/items/checkins/goals/weights/health/
+  meta; DB v5). Pure, tested logic modules shared by app + `node --test`:
+  `donow-utils`, `checkin-utils`, `voice-utils`, `dreaming-utils`, `goals-utils`,
+  `usage-utils`, `insights-utils`, `health-utils`. `app.js` = routing + views.
 - Matches the style of sibling apps (`education-planner-app`, `summer-holidays-app`).

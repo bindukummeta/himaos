@@ -241,3 +241,42 @@ test("smoke: empty + sparse inputs degrade to safe 'keep logging' states", () =>
   assert.equal(oneW.count, 1);
   assert.equal(oneW.delta, 0, "single point has zero delta, first === last");
 });
+
+// ---- Phase C: health inputs merge into day summaries and correlate ----
+
+test("summariseDays merges healthDays tags into the matching day", () => {
+  const checkins = [ci({ date: "2026-07-15", tags: ["stressed"] })];
+  const healthDays = [
+    { date: "2026-07-15", tags: new Set(["exercise:legs", "med:paracetamol"]) },
+    { date: "2026-07-16", tags: new Set(["vit:d3"]) }, // health-only day still counts
+  ];
+  const days = summariseDays(checkins, healthDays);
+  assert.deepEqual(days.map((d) => d.date), ["2026-07-15", "2026-07-16"]);
+  const d15 = days.find((d) => d.date === "2026-07-15");
+  assert.ok(d15.tags.has("stressed"), "check-in tag kept");
+  assert.ok(d15.tags.has("exercise:legs"), "health tag merged");
+  assert.ok(d15.tags.has("med:paracetamol"));
+  assert.ok(days.find((d) => d.date === "2026-07-16").tags.has("vit:d3"));
+});
+
+test("findPatterns correlates a dynamic health input against an outcome", () => {
+  // 6 days WITH exercise:legs (all low energy) + 6 WITHOUT (none low energy),
+  // clearing MIN_DAYS on both sides. Health supplies the input tag.
+  const checkins = [];
+  const healthDays = [];
+  for (let i = 0; i < 6; i++) {
+    const date = shiftDate("2026-07-01", i);
+    checkins.push(ci({ id: "a" + i, date, energy: "low" }));
+    healthDays.push({ date, tags: new Set(["exercise:legs"]) });
+  }
+  for (let i = 0; i < 6; i++) {
+    const date = shiftDate("2026-07-10", i);
+    checkins.push(ci({ id: "b" + i, date, energy: "med" }));
+  }
+  const inputTags = INPUT_TAGS.concat([{ id: "exercise:legs", label: "Leg day", emoji: "🦵" }]);
+  const pats = findPatterns(checkins, healthDays, inputTags);
+  const legs = pats.find((p) => p.tagId === "exercise:legs" && p.outcomeId === "low-energy");
+  assert.ok(legs, "a reportable pattern exists for the health input");
+  assert.equal(legs.withRate, 1, "all leg-day days were low energy");
+  assert.equal(legs.withoutRate, 0);
+});

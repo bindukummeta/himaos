@@ -336,6 +336,26 @@ select:disabled { opacity: 0.6; }
 .weight-input-row input { flex: 1; }
 .weight-unit { font-size: 14px; font-weight: 600; color: var(--muted); }
 
+/* Health (Phase C): vitamins tick list + med logger. Calm, no red zones. */
+.vitamin-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.vitamin-item { display: flex; align-items: center; gap: 8px; }
+.vitamin-tick {
+  flex: 1; display: flex; align-items: center; gap: 10px; cursor: pointer;
+  padding: 10px 12px; text-align: left; font-size: 15px; font-weight: 600; color: var(--text);
+  background: var(--card-2); border: 1px solid var(--border-strong); border-radius: var(--r-md);
+}
+.vitamin-tick:hover { border-color: var(--accent); }
+.vitamin-tick.on { background: color-mix(in srgb, var(--accent-2) 18%, transparent); border-color: var(--accent-2); }
+.vitamin-emoji { font-size: 18px; line-height: 1; }
+.vitamin-name { flex: 1; }
+.vitamin-check { font-weight: 800; color: var(--accent-2); width: 16px; text-align: center; }
+.vitamin-def-form { display: flex; gap: 8px; }
+.vitamin-def-form input { flex: 1; }
+.med-form input { width: 100%; margin-bottom: 10px; }
+.med-count-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.med-count-row label { font-size: 14px; font-weight: 600; color: var(--muted); }
+.med-count-row input { width: 88px; margin-bottom: 0; }
+
 /* Voice input: mic button on the note field + Settings toggle. */
 .note-with-mic { display: flex; align-items: center; gap: 8px; }
 .note-with-mic input { flex: 1; }

@@ -8,8 +8,12 @@
   "use strict";
 
   const DB_NAME = "hima-os";
-  const DB_VERSION = 4;
-  const STORES = { sections: "sections", items: "items", meta: "meta", checkins: "checkins", goals: "goals", weights: "weights" };
+  const DB_VERSION = 5;
+  const STORES = { sections: "sections", items: "items", meta: "meta", checkins: "checkins", goals: "goals", weights: "weights", health: "health" };
+
+  // Meta key holding the define-once vitamin list (Phase C). Each entry:
+  // { id, name, emoji }. Ticked daily as timestamped "vitamin" health entries.
+  const META_VITAMINS = "vitamins";
 
   // Built-in starter sections. Stable ids/keys so future cross-links survive.
   // `kind` drives which fields and controls the UI shows for a section.
@@ -90,6 +94,17 @@
           const s = db.createObjectStore(STORES.weights, { keyPath: "id" });
           s.createIndex("date", "date", { unique: false });
           s.createIndex("at", "at", { unique: false });
+        }
+        // Health log (Phase C): one timestamped store for all three kinds
+        // (exercise / vitamin / med), like checkins. `kind` distinguishes them;
+        // payload fields vary per kind (types[] / vitId / name+count). The
+        // define-once vitamin list lives in meta, not here. `date`/`at` mirror
+        // checkins so it joins cleanly for correlation insights.
+        if (!db.objectStoreNames.contains(STORES.health)) {
+          const s = db.createObjectStore(STORES.health, { keyPath: "id" });
+          s.createIndex("date", "date", { unique: false });
+          s.createIndex("at", "at", { unique: false });
+          s.createIndex("kind", "kind", { unique: false });
         }
       };
       req.onsuccess = () => resolve(req.result);
@@ -354,6 +369,49 @@
     return reqP(store.delete(id));
   }
 
+  // ---- health (Phase C: exercise / vitamin / med, one timestamped store) ----
+  async function getHealth(filter) {
+    filter = filter || {};
+    const store = await tx(STORES.health, "readonly");
+    let rows = await reqP(store.getAll());
+    if (filter.date) rows = rows.filter((r) => r.date === filter.date);
+    if (filter.kind) rows = rows.filter((r) => r.kind === filter.kind);
+    return rows.sort((a, b) => (a.at || 0) - (b.at || 0));
+  }
+  async function addHealth(rec) {
+    const now = Date.now();
+    const record = Object.assign(
+      // date = local "YYYY-MM-DD"; at = exact moment. kind = exercise|vitamin|med.
+      // Per-kind payload: exercise -> types[]; vitamin -> vitId; med -> name + count.
+      { id: uid(), date: null, at: now, kind: null, types: [], vitId: null, name: "", count: 1, createdAt: now, updatedAt: now },
+      rec
+    );
+    const store = await tx(STORES.health, "readwrite");
+    await reqP(store.put(record));
+    return record;
+  }
+  async function deleteHealth(id) {
+    const store = await tx(STORES.health, "readwrite");
+    return reqP(store.delete(id));
+  }
+
+  // Define-once vitamin list (stored in meta). Each: { id, name, emoji }.
+  async function getVitamins() {
+    const list = await getMeta(META_VITAMINS);
+    return Array.isArray(list) ? list : [];
+  }
+  async function addVitamin(rec) {
+    const list = await getVitamins();
+    const vit = Object.assign({ id: uid(), name: "", emoji: "💊" }, rec);
+    await setMeta(META_VITAMINS, list.concat([vit]));
+    return vit;
+  }
+  async function deleteVitamin(id) {
+    const list = await getVitamins();
+    await setMeta(META_VITAMINS, list.filter((v) => v.id !== id));
+    return true;
+  }
+
   // ---- meta ----
   async function getMeta(key) {
     const store = await tx(STORES.meta, "readonly");
@@ -372,7 +430,9 @@
     const checkins = await getCheckins();
     const goals = await getGoals();
     const weights = await getWeights();
-    return { app: "hima-os", version: DB_VERSION, exportedAt: Date.now(), sections, items, checkins, goals, weights };
+    const health = await getHealth();
+    const vitamins = await getVitamins();
+    return { app: "hima-os", version: DB_VERSION, exportedAt: Date.now(), sections, items, checkins, goals, weights, health, vitamins };
   }
   async function clearStore(name) {
     const store = await tx(name, "readwrite");
@@ -385,6 +445,7 @@
     await clearStore(STORES.checkins);
     await clearStore(STORES.goals);
     await clearStore(STORES.weights);
+    await clearStore(STORES.health);
     for (const s of payload.sections || []) {
       const store = await tx(STORES.sections, "readwrite");
       await reqP(store.put(s));
@@ -405,6 +466,12 @@
       const store = await tx(STORES.weights, "readwrite");
       await reqP(store.put(w));
     }
+    for (const h of payload.health || []) {
+      const store = await tx(STORES.health, "readwrite");
+      await reqP(store.put(h));
+    }
+    // Vitamin definitions live in meta; restore them if the backup carried any.
+    if (Array.isArray(payload.vitamins)) await setMeta(META_VITAMINS, payload.vitamins);
     return true;
   }
 
@@ -420,6 +487,8 @@
     getItems, getItem, addItem, updateItem, deleteItem, clearDone,
     getCheckins, getCheckin, addCheckin, deleteCheckin,
     getWeights, addWeight, deleteWeight,
+    getHealth, addHealth, deleteHealth,
+    getVitamins, addVitamin, deleteVitamin,
     getGoals, getGoal, addGoal, updateGoal, deleteGoal, reorderGoals,
     addActivity, updateActivity, deleteActivity, toggleActivityWeek,
     getMeta, setMeta,

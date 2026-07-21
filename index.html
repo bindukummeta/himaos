@@ -28,6 +28,7 @@
       <li><button class="nav-item" data-view="donow"><span class="nav-ico">⚡</span><span class="nav-label">Do Now</span></button></li>
       <li><button class="nav-item" data-view="checkin"><span class="nav-ico">💗</span><span class="nav-label">Daily check-in</span></button></li>
       <li><button class="nav-item" data-view="goals"><span class="nav-ico">🎯</span><span class="nav-label">Goals</span></button></li>
+      <li><button class="nav-item" data-view="health"><span class="nav-ico">🩺</span><span class="nav-label">Health</span></button></li>
       <li><button class="nav-item" data-view="insights"><span class="nav-ico">📊</span><span class="nav-label">Insights</span></button></li>
     </ul>
     <p class="nav-heading">Sections</p>
@@ -173,6 +174,55 @@
         </form>
       </div>
       <div id="weight-list"></div>
+    </section>
+
+    <!-- ============ HEALTH (Phase C) ============ -->
+    <section id="view-health" class="view hidden">
+      <div class="section-head">
+        <h2>🩺 Health</h2>
+      </div>
+      <p class="hint">A light daily log of movement, vitamins and any medication — so it can connect with your rhythms later. All optional, all on-device.</p>
+
+      <h2 class="section-heading">Exercise today</h2>
+      <p class="hint">Pick anything you did — blank is a rest day, no guilt.</p>
+      <div class="card">
+        <form id="exercise-form" autocomplete="off">
+          <div class="field chip-field">
+            <div class="chip-row" id="exercise-tags" data-val=""></div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="exercise-submit">Log exercise</button>
+          </div>
+        </form>
+      </div>
+
+      <h2 class="section-heading">Vitamins</h2>
+      <p class="hint">Set your regulars once, then tick what you took today.</p>
+      <div class="card">
+        <div id="vitamin-list" class="vitamin-list"></div>
+        <form id="vitamin-def-form" class="vitamin-def-form" autocomplete="off">
+          <input id="vitamin-name" placeholder="Add a vitamin (e.g. Vitamin D)" />
+          <button type="submit" class="btn-secondary" id="vitamin-add">Add</button>
+        </form>
+      </div>
+
+      <h2 class="section-heading">Medication</h2>
+      <p class="hint">Log anything you take and how many — a plain record, not advice.</p>
+      <div class="card">
+        <form id="med-form" class="med-form" autocomplete="off">
+          <input id="med-name" placeholder="Name (e.g. Paracetamol)" />
+          <div class="med-count-row">
+            <label for="med-count">How many</label>
+            <input id="med-count" type="number" inputmode="numeric" step="1" min="1" value="1" />
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="med-submit">Log medication</button>
+          </div>
+        </form>
+      </div>
+
+      <h2 class="section-heading">Today</h2>
+      <div id="health-today"></div>
     </section>
 
     <!-- ============ GOALS + WEEKLY REVIEW ============ -->
@@ -334,6 +384,7 @@
   <script src="goals-utils.js"></script>
   <script src="usage-utils.js"></script>
   <script src="insights-utils.js"></script>
+  <script src="health-utils.js"></script>
   <script src="app.js"></script>
   <script src="sw-register.js"></script>
 </body>
