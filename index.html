@@ -28,6 +28,7 @@
       <li><button class="nav-item" data-view="donow"><span class="nav-ico">⚡</span><span class="nav-label">Do Now</span></button></li>
       <li><button class="nav-item" data-view="checkin"><span class="nav-ico">💗</span><span class="nav-label">Daily check-in</span></button></li>
       <li><button class="nav-item" data-view="goals"><span class="nav-ico">🎯</span><span class="nav-label">Goals</span></button></li>
+      <li><button class="nav-item" data-view="insights"><span class="nav-ico">📊</span><span class="nav-label">Insights</span></button></li>
     </ul>
     <p class="nav-heading">Sections</p>
     <ul class="nav-list" id="nav-sections"></ul>
@@ -54,6 +55,14 @@
         <span class="checkin-cta-main">
           <span class="checkin-cta-title" id="dash-checkin-title">How are you feeling?</span>
           <span class="checkin-cta-sub" id="dash-checkin-sub">A 5-second energy + mood tap.</span>
+        </span>
+        <span class="donow-cta-arrow">→</span>
+      </button>
+      <button type="button" id="dash-insights" class="checkin-cta hidden">
+        <span class="checkin-cta-ico">📊</span>
+        <span class="checkin-cta-main">
+          <span class="checkin-cta-title">Your patterns</span>
+          <span class="checkin-cta-sub" id="dash-insights-sub"></span>
         </span>
         <span class="donow-cta-arrow">→</span>
       </button>
@@ -211,6 +220,23 @@
       <div id="goals-list"></div>
     </section>
 
+    <!-- ============ PATTERN INSIGHTS (Step 5) ============ -->
+    <section id="view-insights" class="view hidden">
+      <div class="section-head">
+        <h2>📊 Patterns</h2>
+      </div>
+      <p class="hint">Gentle reflections from your own check-ins and weight — what tends to go together, never a diagnosis or a target. Keep logging and more will surface.</p>
+
+      <h2 class="section-heading">What tends to go together</h2>
+      <div id="insights-patterns"></div>
+
+      <h2 class="section-heading">Around bloating</h2>
+      <div id="insights-bloating"></div>
+
+      <h2 class="section-heading">Weight trend</h2>
+      <div id="insights-weight"></div>
+    </section>
+
     <!-- ============ SECTION (generic) ============ -->
     <section id="view-section" class="view hidden">
       <div class="section-head">
@@ -307,6 +333,7 @@
   <script src="dreaming-utils.js"></script>
   <script src="goals-utils.js"></script>
   <script src="usage-utils.js"></script>
+  <script src="insights-utils.js"></script>
   <script src="app.js"></script>
   <script src="sw-register.js"></script>
 </body>

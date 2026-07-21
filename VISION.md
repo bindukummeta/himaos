@@ -78,9 +78,14 @@ Positioning: lead with the universal promise; broad in *who*, sharp in *how*.
       rollup; dashboard "one thing" nudge via `pickOneThing`; guilt-free review
       with move/snooze; `goals` store — DB v3 — in backup; `goals-utils` + unit
       tests done.)
-- [ ] **Step 5 — Pattern insights.** Overlay the daily log on rhythms to reveal,
+- [x] **Step 5 — Pattern insights.** Overlay the daily log on rhythms to reveal,
       side by side: trigger clusters (universal) and — if enabled — cycle windows.
       Reflect-not-diagnose. This is arguably the app's most valuable output.
+      (Phase A: food capture in the check-in + a neutral weight metric — DB v4.
+      Phase B: an Insights view + dashboard card surfacing input→outcome patterns
+      (mood/energy/bloating) with a ≥5-day threshold both sides, bloating
+      co-occurrence clusters, and a 30/90-day weight sparkline — no goal line, no
+      red zones; `insights-utils` + unit tests done. Cycle windows deferred.)
 - [ ] **Step 6 — Coach (someday layer).** Start as a structured, rule-based
       companion (right question at the right time, entirely on-device). A
       conversational AI coach is a deliberate LATER fork — it must not break the
