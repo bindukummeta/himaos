@@ -1,4 +1,4 @@
-const CACHE = "hima-os-v8";
+const CACHE = "hima-os-v9";
 const ASSETS = [
   "./",
   "./index.html",

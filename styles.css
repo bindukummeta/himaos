@@ -328,6 +328,14 @@ select:disabled { opacity: 0.6; }
 .checkin-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .checkin-time { font-size: 12px; color: var(--muted); font-weight: 600; white-space: nowrap; }
 
+/* Food chips sit just under the one-line meal input; give them a little air. */
+#checkin-food-tags { margin-top: 8px; }
+
+/* Weight capture: a number field with a trailing unit + a feeling note. */
+.weight-input-row { display: flex; align-items: center; gap: 8px; }
+.weight-input-row input { flex: 1; }
+.weight-unit { font-size: 14px; font-weight: 600; color: var(--muted); }
+
 /* Voice input: mic button on the note field + Settings toggle. */
 .note-with-mic { display: flex; align-items: center; gap: 8px; }
 .note-with-mic input { flex: 1; }

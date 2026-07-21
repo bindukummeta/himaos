@@ -24,6 +24,8 @@
   ];
 
   // Optional context tags (multi-select). Ids are stable for future insights.
+  // `bloated` is an outcome tag (how the body feels), sitting alongside the
+  // other "what's going on" signals so it can later correlate with food.
   const CONTEXT_TAGS = [
     { id: "slept-badly", emoji: "😴", label: "Slept badly" },
     { id: "hungry", emoji: "🍽️", label: "Hungry" },
@@ -32,7 +34,18 @@
     { id: "people", emoji: "👥", label: "People" },
     { id: "exercised", emoji: "🏃", label: "Exercised" },
     { id: "caffeine", emoji: "☕", label: "Caffeine" },
+    { id: "bloated", emoji: "🎈", label: "Bloated" },
     { id: "unwell", emoji: "🤒", label: "Unwell" },
+  ];
+
+  // Optional food tags (multi-select), captured next to a one-line meal note.
+  // Kept separate from CONTEXT_TAGS so "what I ate" stays distinct from "how I
+  // feel / what's going on"; both feed future pattern insights (Step 5).
+  const FOOD_TAGS = [
+    { id: "heavy", emoji: "🍽️", label: "Heavy" },
+    { id: "light", emoji: "🥗", label: "Light" },
+    { id: "skipped", emoji: "⭕", label: "Skipped" },
+    { id: "late", emoji: "🌙", label: "Late" },
   ];
 
   function moodChoice(n) {
@@ -41,6 +54,7 @@
   function moodLabel(n) { const c = moodChoice(n); return c ? c.label : ""; }
   function moodEmoji(n) { const c = moodChoice(n); return c ? c.emoji : ""; }
   function tagLabel(id) { const t = CONTEXT_TAGS.find((x) => x.id === id); return t ? t.label : id; }
+  function foodTagLabel(id) { const t = FOOD_TAGS.find((x) => x.id === id); return t ? t.label : id; }
 
   // All check-ins on a given local day, newest moment first.
   function checkinsOn(list, dateISO) {
@@ -85,10 +99,12 @@
   return {
     MOOD_CHOICES: MOOD_CHOICES,
     CONTEXT_TAGS: CONTEXT_TAGS,
+    FOOD_TAGS: FOOD_TAGS,
     moodChoice: moodChoice,
     moodLabel: moodLabel,
     moodEmoji: moodEmoji,
     tagLabel: tagLabel,
+    foodTagLabel: foodTagLabel,
     checkinsOn: checkinsOn,
     latestCheckin: latestCheckin,
     addDays: addDays,

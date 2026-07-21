@@ -5,7 +5,8 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
-  moodLabel, moodEmoji, checkinsOn, latestCheckin, addDays, checkinStreak,
+  moodLabel, moodEmoji, tagLabel, foodTagLabel, CONTEXT_TAGS, FOOD_TAGS,
+  checkinsOn, latestCheckin, addDays, checkinStreak,
 } = require("./checkin-utils.js");
 
 // Build a check-in quickly. `at` defaults from the date at noon so ordering
@@ -21,6 +22,15 @@ test("moodLabel / moodEmoji map the 1-5 scale", () => {
   assert.equal(moodEmoji(5), "😄");
   assert.equal(moodLabel(9), "", "out-of-range -> empty");
   assert.equal(moodLabel(null), "", "null -> empty");
+});
+
+test("bloated is a context tag; food tags resolve their own labels", () => {
+  assert.ok(CONTEXT_TAGS.some((t) => t.id === "bloated"), "bloated added to context");
+  assert.equal(tagLabel("bloated"), "Bloated");
+  assert.deepEqual(FOOD_TAGS.map((t) => t.id), ["heavy", "light", "skipped", "late"]);
+  assert.equal(foodTagLabel("heavy"), "Heavy");
+  assert.equal(foodTagLabel("late"), "Late");
+  assert.equal(foodTagLabel("nope"), "nope", "unknown id falls back to itself");
 });
 
 test("checkinsOn filters by day and sorts newest moment first", () => {

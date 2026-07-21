@@ -8,8 +8,8 @@
   "use strict";
 
   const DB_NAME = "hima-os";
-  const DB_VERSION = 3;
-  const STORES = { sections: "sections", items: "items", meta: "meta", checkins: "checkins", goals: "goals" };
+  const DB_VERSION = 4;
+  const STORES = { sections: "sections", items: "items", meta: "meta", checkins: "checkins", goals: "goals", weights: "weights" };
 
   // Built-in starter sections. Stable ids/keys so future cross-links survive.
   // `kind` drives which fields and controls the UI shows for a section.
@@ -82,6 +82,14 @@
           s.createIndex("horizon", "horizon", { unique: false });
           s.createIndex("status", "status", { unique: false });
           s.createIndex("order", "order", { unique: false });
+        }
+        // Weight metric (Phase A of food/weight tracking). A neutral trend, not a
+        // goal-vs-actual scold: each entry is a number + how it felt that day, so
+        // it can later correlate with check-in context. `date`/`at` mirror checkins.
+        if (!db.objectStoreNames.contains(STORES.weights)) {
+          const s = db.createObjectStore(STORES.weights, { keyPath: "id" });
+          s.createIndex("date", "date", { unique: false });
+          s.createIndex("at", "at", { unique: false });
         }
       };
       req.onsuccess = () => resolve(req.result);
@@ -226,7 +234,8 @@
     const record = Object.assign(
       // date = local "YYYY-MM-DD" (set by caller); at = the exact moment.
       // mood is 1-5; energy is low/med/high; tags is an array of context ids.
-      { id: uid(), date: null, at: now, mood: null, energy: null, tags: [], note: "", createdAt: now, updatedAt: now },
+      // food is a one-line meal note; foodTags is an array of food-context ids.
+      { id: uid(), date: null, at: now, mood: null, energy: null, tags: [], food: "", foodTags: [], note: "", createdAt: now, updatedAt: now },
       rec
     );
     const store = await tx(STORES.checkins, "readwrite");
@@ -320,6 +329,31 @@
     return updateGoal(goalId, { activities });
   }
 
+  // ---- weights (neutral weight trend; number + feeling per entry) ----
+  async function getWeights(filter) {
+    filter = filter || {};
+    const store = await tx(STORES.weights, "readonly");
+    let rows = await reqP(store.getAll());
+    if (filter.date) rows = rows.filter((r) => r.date === filter.date);
+    return rows.sort((a, b) => (a.at || 0) - (b.at || 0));
+  }
+  async function addWeight(rec) {
+    const now = Date.now();
+    const record = Object.assign(
+      // date = local "YYYY-MM-DD"; at = exact moment. kg is a number; feeling is
+      // an optional free-text/tag of how the day felt (for later correlation).
+      { id: uid(), date: null, at: now, kg: null, feeling: "", createdAt: now, updatedAt: now },
+      rec
+    );
+    const store = await tx(STORES.weights, "readwrite");
+    await reqP(store.put(record));
+    return record;
+  }
+  async function deleteWeight(id) {
+    const store = await tx(STORES.weights, "readwrite");
+    return reqP(store.delete(id));
+  }
+
   // ---- meta ----
   async function getMeta(key) {
     const store = await tx(STORES.meta, "readonly");
@@ -337,7 +371,8 @@
     const items = await getItems();
     const checkins = await getCheckins();
     const goals = await getGoals();
-    return { app: "hima-os", version: DB_VERSION, exportedAt: Date.now(), sections, items, checkins, goals };
+    const weights = await getWeights();
+    return { app: "hima-os", version: DB_VERSION, exportedAt: Date.now(), sections, items, checkins, goals, weights };
   }
   async function clearStore(name) {
     const store = await tx(name, "readwrite");
@@ -349,6 +384,7 @@
     await clearStore(STORES.items);
     await clearStore(STORES.checkins);
     await clearStore(STORES.goals);
+    await clearStore(STORES.weights);
     for (const s of payload.sections || []) {
       const store = await tx(STORES.sections, "readwrite");
       await reqP(store.put(s));
@@ -365,6 +401,10 @@
       const store = await tx(STORES.goals, "readwrite");
       await reqP(store.put(g));
     }
+    for (const w of payload.weights || []) {
+      const store = await tx(STORES.weights, "readwrite");
+      await reqP(store.put(w));
+    }
     return true;
   }
 
@@ -379,6 +419,7 @@
     getSections, getSection, addSection, updateSection, deleteSection, reorderSections, restoreStarters,
     getItems, getItem, addItem, updateItem, deleteItem, clearDone,
     getCheckins, getCheckin, addCheckin, deleteCheckin,
+    getWeights, addWeight, deleteWeight,
     getGoals, getGoal, addGoal, updateGoal, deleteGoal, reorderGoals,
     addActivity, updateActivity, deleteActivity, toggleActivityWeek,
     getMeta, setMeta,

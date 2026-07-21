@@ -127,6 +127,11 @@
             <label>What's going on? <span class="chip-optional">(optional)</span></label>
             <div class="chip-row" id="checkin-tags" data-val=""></div>
           </div>
+          <div class="field chip-field">
+            <label>Food <span class="chip-optional">(optional)</span></label>
+            <input id="checkin-food" placeholder="What did you eat? One line is plenty." />
+            <div class="chip-row" id="checkin-food-tags" data-val=""></div>
+          </div>
           <div class="field note-with-mic">
             <input id="checkin-note" placeholder="Anything to add? (optional)" />
             <button type="button" id="checkin-mic" class="mic-btn hidden" aria-label="Speak your check-in" title="Speak your check-in">🎤</button>
@@ -138,6 +143,27 @@
       </div>
       <h2 class="section-heading">Today</h2>
       <div id="checkin-today"></div>
+
+      <h2 class="section-heading">Weight</h2>
+      <p class="hint">Optional, whenever you like — a gentle trend, not a target. A number plus how the day felt, so it can connect with your rhythms later.</p>
+      <div class="card">
+        <form id="weight-form" class="weight-form" autocomplete="off">
+          <div class="field">
+            <label for="weight-kg">Weight</label>
+            <div class="weight-input-row">
+              <input id="weight-kg" type="number" inputmode="decimal" step="0.1" min="0" placeholder="e.g. 72.4" />
+              <span class="weight-unit">kg</span>
+            </div>
+          </div>
+          <div class="field">
+            <input id="weight-feeling" placeholder="How did today feel? (optional)" />
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="weight-submit">Log weight</button>
+          </div>
+        </form>
+      </div>
+      <div id="weight-list"></div>
     </section>
 
     <!-- ============ GOALS + WEEKLY REVIEW ============ -->
