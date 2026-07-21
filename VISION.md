@@ -115,5 +115,12 @@ Positioning: lead with the universal promise; broad in *who*, sharp in *how*.
 - `storage.js` = `HimaStore` seam (sections/items/checkins/goals/weights/health/
   meta; DB v5). Pure, tested logic modules shared by app + `node --test`:
   `donow-utils`, `checkin-utils`, `voice-utils`, `dreaming-utils`, `goals-utils`,
-  `usage-utils`, `insights-utils`, `health-utils`. `app.js` = routing + views.
+  `usage-utils`, `insights-utils`, `health-utils`.
+- UI is split (no build step, UMD-on-`window`): `app-shell.js` exposes the shared
+  `ctx` (`window.HimaShell`) — DOM/format helpers, label maps, mutable app state,
+  drawer/nav, `showView` router + `ctx.views` registry, data refreshers, silent
+  usage tracking. Each view is its own file (`window.XxxView(ctx)` → registers a
+  render fn + returns `wire()`): `dashboard-view`, `donow-view`, `checkin-view`,
+  `goals-view`, `health-view`, `insights-view`, `section-view`, `settings-view`.
+  `app.js` is now a thin bootstrap: instantiate views, wire, boot.
 - Matches the style of sibling apps (`education-planner-app`, `summer-holidays-app`).

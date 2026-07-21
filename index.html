@@ -385,6 +385,17 @@
   <script src="usage-utils.js"></script>
   <script src="insights-utils.js"></script>
   <script src="health-utils.js"></script>
+  <!-- App shell (shared ctx) loads after utils + storage; view modules load
+       after the shell and register into ctx.views; app.js boots last. -->
+  <script src="app-shell.js"></script>
+  <script src="health-view.js"></script>
+  <script src="insights-view.js"></script>
+  <script src="dashboard-view.js"></script>
+  <script src="donow-view.js"></script>
+  <script src="checkin-view.js"></script>
+  <script src="goals-view.js"></script>
+  <script src="section-view.js"></script>
+  <script src="settings-view.js"></script>
   <script src="app.js"></script>
   <script src="sw-register.js"></script>
 </body>
