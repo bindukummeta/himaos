@@ -29,6 +29,7 @@
       <li><button class="nav-item" data-view="checkin"><span class="nav-ico">💗</span><span class="nav-label">Daily check-in</span></button></li>
       <li><button class="nav-item" data-view="goals"><span class="nav-ico">🎯</span><span class="nav-label">Goals</span></button></li>
       <li><button class="nav-item" data-view="health"><span class="nav-ico">🩺</span><span class="nav-label">Health</span></button></li>
+      <li><button class="nav-item" data-view="evidence"><span class="nav-ico">📜</span><span class="nav-label">Evidence</span></button></li>
       <li><button class="nav-item" data-view="insights"><span class="nav-ico">📊</span><span class="nav-label">Insights</span></button></li>
     </ul>
     <p class="nav-heading">Sections</p>
@@ -132,6 +133,10 @@
           <div class="field chip-field">
             <label>Energy</label>
             <div class="chip-row" id="checkin-energy" data-val=""></div>
+          </div>
+          <div class="field chip-field">
+            <label>Sleep <span class="chip-optional">(optional)</span></label>
+            <div class="chip-row" id="checkin-sleep" data-val=""></div>
           </div>
           <div class="field chip-field">
             <label>What's going on? <span class="chip-optional">(optional)</span></label>
@@ -287,6 +292,67 @@
       <div id="insights-weight"></div>
     </section>
 
+    <!-- ============ EVIDENCE VAULT (Phase D) ============ -->
+    <section id="view-evidence" class="view hidden">
+      <div class="section-head">
+        <h2>📜 Evidence</h2>
+      </div>
+      <p class="hint">A record of what you did and what it proves — the counterweight to a hard day. One line is enough; add the rest whenever you want.</p>
+
+      <div class="card">
+        <form id="evidence-form" autocomplete="off">
+          <input type="hidden" id="evidence-id" />
+          <div class="grid-2">
+            <div class="field"><label for="evidence-date">Date</label><input type="date" id="evidence-date" /></div>
+            <div class="field"><label for="evidence-title">What you did *</label><input id="evidence-title" required placeholder="e.g. Got out for a walk" /></div>
+          </div>
+          <button type="button" id="evidence-more-btn" class="btn-link" aria-expanded="false">More details ▾</button>
+          <div id="evidence-details" class="evidence-details">
+            <div class="field"><label for="evidence-challenges">Challenges</label><input id="evidence-challenges" placeholder="What made it hard?" /></div>
+            <div class="field"><label for="evidence-setbacks">Setbacks</label><input id="evidence-setbacks" placeholder="What got in the way?" /></div>
+            <div class="field"><label for="evidence-achievements">Achievements</label><input id="evidence-achievements" placeholder="What went well?" /></div>
+            <div class="field"><label for="evidence-lessons">Lessons</label><input id="evidence-lessons" placeholder="What did you learn?" /></div>
+            <div class="field"><label for="evidence-proves">What it proves</label><input id="evidence-proves" placeholder="What does this say about you?" /></div>
+            <div class="field chip-field">
+              <label>Proof <span class="chip-optional">(optional)</span></label>
+              <div class="chip-row" id="evidence-proof-tags" data-val=""></div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="evidence-submit">Save</button>
+            <button type="button" id="evidence-cancel" class="btn-secondary hidden">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="evidence-tabs">
+        <button type="button" class="tab-btn active" data-etab="week">This week</button>
+        <button type="button" class="tab-btn" data-etab="all">All entries</button>
+      </div>
+
+      <div id="evidence-week" class="evidence-panel">
+        <div class="week-picker">
+          <button type="button" class="icon-btn" id="evidence-week-prev" aria-label="Previous week">‹</button>
+          <span id="evidence-week-label" class="week-label"></span>
+          <button type="button" class="icon-btn" id="evidence-week-next" aria-label="Next week">›</button>
+        </div>
+        <div id="evidence-despite" class="despite-line"></div>
+        <h2 class="section-heading">You wrote</h2>
+        <div id="evidence-week-written"></div>
+        <h2 class="section-heading">Also done this week</h2>
+        <div id="evidence-week-auto"></div>
+      </div>
+
+      <div id="evidence-all" class="evidence-panel hidden">
+        <div class="date-range-row">
+          <div class="field"><label for="evidence-from">From</label><input type="date" id="evidence-from" /></div>
+          <div class="field"><label for="evidence-to">To</label><input type="date" id="evidence-to" /></div>
+          <button type="button" id="evidence-filter-clear" class="btn-secondary">Clear</button>
+        </div>
+        <div id="evidence-list"></div>
+      </div>
+    </section>
+
     <!-- ============ SECTION (generic) ============ -->
     <section id="view-section" class="view hidden">
       <div class="section-head">
@@ -385,6 +451,7 @@
   <script src="usage-utils.js"></script>
   <script src="insights-utils.js"></script>
   <script src="health-utils.js"></script>
+  <script src="evidence-utils.js"></script>
   <!-- App shell (shared ctx) loads after utils + storage; view modules load
        after the shell and register into ctx.views; app.js boots last. -->
   <script src="app-shell.js"></script>
@@ -394,6 +461,7 @@
   <script src="donow-view.js"></script>
   <script src="checkin-view.js"></script>
   <script src="goals-view.js"></script>
+  <script src="evidence-view.js"></script>
   <script src="section-view.js"></script>
   <script src="settings-view.js"></script>
   <script src="app.js"></script>

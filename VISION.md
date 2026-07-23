@@ -91,7 +91,15 @@ Positioning: lead with the universal promise; broad in *who*, sharp in *how*.
       `health` store + vitamin defs in `meta`, both in backup. Health inputs fold
       into the correlation engine as presence tags (`exercise:<id>` / `vit:<id>` /
       `med:<name>`) via `health-utils`; meds correlate by presence (count kept for
-      later views), reflect-not-diagnose wording throughout. Unit tests done.)
+      later views), reflect-not-diagnose wording throughout. Unit tests done.
+      Phase D: the Evidence Vault — date-stamped things you did (one-line title +
+      optional challenges/setbacks/achievements/lessons/what-it-proves + proof-tags),
+      a date-range list, and a weekly view that auto-pulls existing "dones"
+      (finished to-dos, ticked activities, completed goals) beside written entries
+      and caps them with an encouraging "even with a rough week…" line — DB v6, new
+      `evidence` store in backup, pure `evidence-utils` + unit tests. A lightweight
+      sleep chip (poor/ok/good) was added to the daily check-in to feed it. The
+      Vault is the positive counterweight to the correlation engine.)
 - [ ] **Step 6 — Coach (someday layer).** Start as a structured, rule-based
       companion (right question at the right time, entirely on-device). A
       conversational AI coach is a deliberate LATER fork — it must not break the
@@ -113,14 +121,14 @@ Positioning: lead with the universal promise; broad in *who*, sharp in *how*.
 
 - Vanilla HTML/CSS/JS, no build step; PWA (service worker + manifest); IndexedDB.
 - `storage.js` = `HimaStore` seam (sections/items/checkins/goals/weights/health/
-  meta; DB v5). Pure, tested logic modules shared by app + `node --test`:
+  evidence/meta; DB v6). Pure, tested logic modules shared by app + `node --test`:
   `donow-utils`, `checkin-utils`, `voice-utils`, `dreaming-utils`, `goals-utils`,
-  `usage-utils`, `insights-utils`, `health-utils`.
+  `usage-utils`, `insights-utils`, `health-utils`, `evidence-utils`.
 - UI is split (no build step, UMD-on-`window`): `app-shell.js` exposes the shared
   `ctx` (`window.HimaShell`) — DOM/format helpers, label maps, mutable app state,
   drawer/nav, `showView` router + `ctx.views` registry, data refreshers, silent
   usage tracking. Each view is its own file (`window.XxxView(ctx)` → registers a
   render fn + returns `wire()`): `dashboard-view`, `donow-view`, `checkin-view`,
-  `goals-view`, `health-view`, `insights-view`, `section-view`, `settings-view`.
-  `app.js` is now a thin bootstrap: instantiate views, wire, boot.
+  `goals-view`, `health-view`, `evidence-view`, `insights-view`, `section-view`,
+  `settings-view`. `app.js` is now a thin bootstrap: instantiate views, wire, boot.
 - Matches the style of sibling apps (`education-planner-app`, `summer-holidays-app`).

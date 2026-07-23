@@ -8,8 +8,8 @@
   "use strict";
 
   const DB_NAME = "hima-os";
-  const DB_VERSION = 5;
-  const STORES = { sections: "sections", items: "items", meta: "meta", checkins: "checkins", goals: "goals", weights: "weights", health: "health" };
+  const DB_VERSION = 6;
+  const STORES = { sections: "sections", items: "items", meta: "meta", checkins: "checkins", goals: "goals", weights: "weights", health: "health", evidence: "evidence" };
 
   // Meta key holding the define-once vitamin list (Phase C). Each entry:
   // { id, name, emoji }. Ticked daily as timestamped "vitamin" health entries.
@@ -105,6 +105,15 @@
           s.createIndex("date", "date", { unique: false });
           s.createIndex("at", "at", { unique: false });
           s.createIndex("kind", "kind", { unique: false });
+        }
+        // Evidence Vault (Phase D): date-stamped things you did. `date` groups by
+        // local day (and drives ISO-week rollups); `at` is the exact moment. The
+        // reflection fields + proofTags are optional. Additive only — this v5->v6
+        // migration creates the store without touching any existing data.
+        if (!db.objectStoreNames.contains(STORES.evidence)) {
+          const s = db.createObjectStore(STORES.evidence, { keyPath: "id" });
+          s.createIndex("date", "date", { unique: false });
+          s.createIndex("at", "at", { unique: false });
         }
       };
       req.onsuccess = () => resolve(req.result);
@@ -250,7 +259,8 @@
       // date = local "YYYY-MM-DD" (set by caller); at = the exact moment.
       // mood is 1-5; energy is low/med/high; tags is an array of context ids.
       // food is a one-line meal note; foodTags is an array of food-context ids.
-      { id: uid(), date: null, at: now, mood: null, energy: null, tags: [], food: "", foodTags: [], note: "", createdAt: now, updatedAt: now },
+      // sleep is an optional quality chip (poor/ok/good); null on old records.
+      { id: uid(), date: null, at: now, mood: null, energy: null, tags: [], food: "", foodTags: [], sleep: null, note: "", createdAt: now, updatedAt: now },
       rec
     );
     const store = await tx(STORES.checkins, "readwrite");
@@ -395,6 +405,46 @@
     return reqP(store.delete(id));
   }
 
+  // ---- evidence (Phase D: date-stamped things you did) ----
+  async function getEvidence(filter) {
+    filter = filter || {};
+    const store = await tx(STORES.evidence, "readonly");
+    let rows = await reqP(store.getAll());
+    if (filter.date) rows = rows.filter((r) => r.date === filter.date);
+    if (filter.from) rows = rows.filter((r) => r.date >= filter.from);
+    if (filter.to) rows = rows.filter((r) => r.date <= filter.to);
+    return rows.sort((a, b) => (b.at || 0) - (a.at || 0));
+  }
+  async function getEvidenceOne(id) {
+    const store = await tx(STORES.evidence, "readonly");
+    return reqP(store.get(id));
+  }
+  async function addEvidence(rec) {
+    const now = Date.now();
+    const record = Object.assign(
+      // date = local "YYYY-MM-DD" (set by caller); at = exact moment. title is the
+      // required one-liner; the five reflection fields + proofTags[] are optional.
+      { id: uid(), date: null, at: now, title: "", challenges: "", setbacks: "", achievements: "", lessons: "", whatItProves: "", proofTags: [], createdAt: now, updatedAt: now },
+      rec
+    );
+    const store = await tx(STORES.evidence, "readwrite");
+    await reqP(store.put(record));
+    return record;
+  }
+  async function updateEvidence(id, patch) {
+    const store = await tx(STORES.evidence, "readonly");
+    const cur = await reqP(store.get(id));
+    if (!cur) return null;
+    const record = Object.assign({}, cur, patch, { updatedAt: Date.now() });
+    const rw = await tx(STORES.evidence, "readwrite");
+    await reqP(rw.put(record));
+    return record;
+  }
+  async function deleteEvidence(id) {
+    const store = await tx(STORES.evidence, "readwrite");
+    return reqP(store.delete(id));
+  }
+
   // Define-once vitamin list (stored in meta). Each: { id, name, emoji }.
   async function getVitamins() {
     const list = await getMeta(META_VITAMINS);
@@ -431,8 +481,9 @@
     const goals = await getGoals();
     const weights = await getWeights();
     const health = await getHealth();
+    const evidence = await getEvidence();
     const vitamins = await getVitamins();
-    return { app: "hima-os", version: DB_VERSION, exportedAt: Date.now(), sections, items, checkins, goals, weights, health, vitamins };
+    return { app: "hima-os", version: DB_VERSION, exportedAt: Date.now(), sections, items, checkins, goals, weights, health, evidence, vitamins };
   }
   async function clearStore(name) {
     const store = await tx(name, "readwrite");
@@ -446,6 +497,7 @@
     await clearStore(STORES.goals);
     await clearStore(STORES.weights);
     await clearStore(STORES.health);
+    await clearStore(STORES.evidence);
     for (const s of payload.sections || []) {
       const store = await tx(STORES.sections, "readwrite");
       await reqP(store.put(s));
@@ -470,6 +522,10 @@
       const store = await tx(STORES.health, "readwrite");
       await reqP(store.put(h));
     }
+    for (const e of payload.evidence || []) {
+      const store = await tx(STORES.evidence, "readwrite");
+      await reqP(store.put(e));
+    }
     // Vitamin definitions live in meta; restore them if the backup carried any.
     if (Array.isArray(payload.vitamins)) await setMeta(META_VITAMINS, payload.vitamins);
     return true;
@@ -488,6 +544,7 @@
     getCheckins, getCheckin, addCheckin, deleteCheckin,
     getWeights, addWeight, deleteWeight,
     getHealth, addHealth, deleteHealth,
+    getEvidence, getEvidenceOne, addEvidence, updateEvidence, deleteEvidence,
     getVitamins, addVitamin, deleteVitamin,
     getGoals, getGoal, addGoal, updateGoal, deleteGoal, reorderGoals,
     addActivity, updateActivity, deleteActivity, toggleActivityWeek,

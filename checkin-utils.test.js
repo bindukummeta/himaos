@@ -6,6 +6,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
   moodLabel, moodEmoji, tagLabel, foodTagLabel, CONTEXT_TAGS, FOOD_TAGS,
+  SLEEP_CHOICES, sleepChoice, sleepLabel, sleepEmoji,
   checkinsOn, latestCheckin, addDays, checkinStreak,
 } = require("./checkin-utils.js");
 
@@ -22,6 +23,15 @@ test("moodLabel / moodEmoji map the 1-5 scale", () => {
   assert.equal(moodEmoji(5), "😄");
   assert.equal(moodLabel(9), "", "out-of-range -> empty");
   assert.equal(moodLabel(null), "", "null -> empty");
+});
+
+test("sleep choices map poor/ok/good, unknown -> empty", () => {
+  assert.deepEqual(SLEEP_CHOICES.map((s) => s.id), ["poor", "ok", "good"]);
+  assert.equal(sleepLabel("poor"), "Poor");
+  assert.equal(sleepEmoji("good"), "😴");
+  assert.equal(sleepChoice("nope"), null);
+  assert.equal(sleepLabel("nope"), "");
+  assert.equal(sleepLabel(null), "");
 });
 
 test("bloated is a context tag; food tags resolve their own labels", () => {

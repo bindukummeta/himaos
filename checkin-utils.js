@@ -23,6 +23,15 @@
     { val: 5, emoji: "😄", label: "Great" },
   ];
 
+  // Sleep quality (single-select), stored as the string `id`. A lightweight
+  // 3-way chip that mirrors mood/energy; feeds the Evidence Vault's weekly
+  // "despite a rough week" line. Optional — old check-ins have no `sleep`.
+  const SLEEP_CHOICES = [
+    { id: "poor", emoji: "😫", label: "Poor" },
+    { id: "ok", emoji: "😐", label: "OK" },
+    { id: "good", emoji: "😴", label: "Good" },
+  ];
+
   // Optional context tags (multi-select). Ids are stable for future insights.
   // `bloated` is an outcome tag (how the body feels), sitting alongside the
   // other "what's going on" signals so it can later correlate with food.
@@ -53,6 +62,9 @@
   }
   function moodLabel(n) { const c = moodChoice(n); return c ? c.label : ""; }
   function moodEmoji(n) { const c = moodChoice(n); return c ? c.emoji : ""; }
+  function sleepChoice(id) { return SLEEP_CHOICES.find((s) => s.id === id) || null; }
+  function sleepLabel(id) { const c = sleepChoice(id); return c ? c.label : ""; }
+  function sleepEmoji(id) { const c = sleepChoice(id); return c ? c.emoji : ""; }
   function tagLabel(id) { const t = CONTEXT_TAGS.find((x) => x.id === id); return t ? t.label : id; }
   function foodTagLabel(id) { const t = FOOD_TAGS.find((x) => x.id === id); return t ? t.label : id; }
 
@@ -98,11 +110,15 @@
 
   return {
     MOOD_CHOICES: MOOD_CHOICES,
+    SLEEP_CHOICES: SLEEP_CHOICES,
     CONTEXT_TAGS: CONTEXT_TAGS,
     FOOD_TAGS: FOOD_TAGS,
     moodChoice: moodChoice,
     moodLabel: moodLabel,
     moodEmoji: moodEmoji,
+    sleepChoice: sleepChoice,
+    sleepLabel: sleepLabel,
+    sleepEmoji: sleepEmoji,
     tagLabel: tagLabel,
     foodTagLabel: foodTagLabel,
     checkinsOn: checkinsOn,

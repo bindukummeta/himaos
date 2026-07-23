@@ -34,6 +34,7 @@
     "addCheckin", "deleteCheckin",
     "addGoal", "updateGoal", "deleteGoal",
     "addActivity", "updateActivity", "deleteActivity", "toggleActivityWeek",
+    "addEvidence", "updateEvidence", "deleteEvidence",
   ];
   async function recordDay(metaKey) {
     try {
@@ -124,6 +125,7 @@
     goals: [],
     editingGoalId: null,
     goalFormHorizon: "quarter",
+    editingEvidenceId: null,
     // per-view render fns register here so showView can dispatch across files
     views: {},
   };
@@ -153,7 +155,7 @@
   ctx.closeDrawer = closeDrawer;
   ctx.toggleDrawer = toggleDrawer;
 
-  const VIEW_KEYS = ["dashboard", "donow", "checkin", "goals", "health", "insights", "section", "manage", "settings"];
+  const VIEW_KEYS = ["dashboard", "donow", "checkin", "goals", "health", "evidence", "insights", "section", "manage", "settings"];
   ctx.VIEW_KEYS = VIEW_KEYS;
   function renderNav() {
     const ul = $("nav-sections");

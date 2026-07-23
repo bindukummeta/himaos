@@ -7,7 +7,7 @@ window.CheckinView = function (ctx) {
   const { $, esc, toast, todayISO, fmtDate, fmtClock, store } = ctx;
   const { ENERGY_LABEL } = ctx;
   const { ENERGY_CHOICES } = window.DoNowUtils;
-  const { MOOD_CHOICES, CONTEXT_TAGS, FOOD_TAGS, moodEmoji, moodLabel, tagLabel, foodTagLabel, checkinsOn, checkinStreak } = window.CheckinUtils;
+  const { MOOD_CHOICES, SLEEP_CHOICES, CONTEXT_TAGS, FOOD_TAGS, moodEmoji, moodLabel, sleepLabel, sleepEmoji, tagLabel, foodTagLabel, checkinsOn, checkinStreak } = window.CheckinUtils;
   const { parseCheckinSpeech } = window.VoiceUtils;
   function speechSupported() {
     return typeof (window.SpeechRecognition || window.webkitSpeechRecognition) === "function";
@@ -23,6 +23,10 @@ window.CheckinView = function (ctx) {
       `<button type="button" class="chip" data-cgroup="energy" data-val="${esc(e)}">${esc(ENERGY_LABEL[e])}</button>`
     ).join("");
     $("checkin-energy").dataset.val = "";
+    $("checkin-sleep").innerHTML = SLEEP_CHOICES.map((s) =>
+      `<button type="button" class="chip" data-cgroup="sleep" data-val="${esc(s.id)}">${esc(s.emoji)} ${esc(s.label)}</button>`
+    ).join("");
+    $("checkin-sleep").dataset.val = "";
     $("checkin-tags").innerHTML = CONTEXT_TAGS.map((t) =>
       `<button type="button" class="chip" data-cgroup="tags" data-val="${esc(t.id)}" data-multi="1">${esc(t.emoji)} ${esc(t.label)}</button>`
     ).join("");
@@ -36,6 +40,7 @@ window.CheckinView = function (ctx) {
     const food = [c.food, (c.foodTags || []).map(foodTagLabel).join(", ")].filter(Boolean).join(" — ");
     const bits = [
       c.energy ? ENERGY_LABEL[c.energy] : "",
+      c.sleep ? sleepEmoji(c.sleep) + " " + sleepLabel(c.sleep) : "",
       (c.tags || []).map(tagLabel).join(", "),
       food ? "🍽️ " + food : "",
       c.note,
@@ -126,11 +131,12 @@ window.CheckinView = function (ctx) {
     e.preventDefault();
     const mood = $("checkin-mood").dataset.val ? Number($("checkin-mood").dataset.val) : null;
     const energy = $("checkin-energy").dataset.val || null;
+    const sleep = $("checkin-sleep").dataset.val || null;
     const { food, foodTags } = readCheckinFood();
-    if (!mood && !energy && !food && !foodTags.length) { toast("Tap a mood or energy first 💗"); return; }
+    if (!mood && !energy && !sleep && !food && !foodTags.length) { toast("Tap a mood or energy first 💗"); return; }
     const tags = Array.from($("checkin-tags").querySelectorAll(".chip.selected")).map((b) => b.dataset.val);
     const note = ($("checkin-note").value || "").trim();
-    await store.addCheckin({ date: todayISO(), at: Date.now(), mood, energy, tags, food, foodTags, note });
+    await store.addCheckin({ date: todayISO(), at: Date.now(), mood, energy, sleep, tags, food, foodTags, note });
     toast("Logged. Thanks for checking in. 💗");
     renderCheckin();
   }
