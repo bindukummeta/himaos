@@ -19,6 +19,7 @@
     window.DoNowView(ctx),
     window.CheckinView(ctx),
     window.GoalsView(ctx),
+    window.Q3View(ctx),
     window.EvidenceView(ctx),
     window.SectionView(ctx),
     window.SettingsView(ctx),

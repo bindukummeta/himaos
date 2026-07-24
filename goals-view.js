@@ -9,6 +9,7 @@ window.GoalsView = function (ctx) {
     HORIZON_ORDER, currentWeekKey, activitiesForWeek,
     goalProgress, goalsByHorizon, weeklyReviewData,
   } = window.GoalsUtils;
+  const { activityWeekStatus, milestoneProgress, daysLeft, paceFor } = window.Q3Utils;
 
   // Build the horizon chip picker for the goal form (year/quarter only — the
   // single vision lives in its own banner and is edited separately).
@@ -24,6 +25,7 @@ window.GoalsView = function (ctx) {
     $("goal-id").value = "";
     $("gf-title").value = "";
     $("gf-note").value = "";
+    $("gf-deadline").value = "";
     buildGoalHorizonField();
     $("goal-form-title").textContent = "Add a goal";
     $("goal-submit").textContent = "Add goal";
@@ -49,13 +51,55 @@ window.GoalsView = function (ctx) {
       $("vf-note").value = v ? v.note || "" : "";
     }
   }
-  // One embedded weekly activity row: a per-week tick + its title.
-  function activityRow(goalId, a) {
+  // One embedded weekly activity row. Binary activities keep the single tick;
+  // ones with a weeklyTarget show a "n/target this week" counter with −/+ steppers.
+  function activityRow(goalId, a, weekKey) {
+    const st = activityWeekStatus(a, weekKey);
+    if (st.target) {
+      return `<div class="goal-activity counted${st.done ? " done" : ""}" data-activity-id="${esc(a.id)}">
+        <div class="activity-counter">
+          <button class="count-step" data-act="activity-dec" aria-label="Log one less">−</button>
+          <span class="count-val">${st.count}/${st.target}</span>
+          <button class="count-step" data-act="activity-inc" aria-label="Log one more">+</button>
+        </div>
+        <span class="activity-title">${esc(a.title)}<span class="week-note"> this week</span></span>
+        <div class="item-actions"><button class="icon-btn" data-act="del-activity" aria-label="Delete activity">🗑️</button></div>
+      </div>`;
+    }
     return `<div class="goal-activity${a.done ? " done" : ""}" data-activity-id="${esc(a.id)}">
       <button class="activity-check" data-act="toggle-activity" aria-label="Mark done this week">${a.done ? "✓" : ""}</button>
       <span class="activity-title">${esc(a.title)}</span>
       <div class="item-actions"><button class="icon-btn" data-act="del-activity" aria-label="Delete activity">🗑️</button></div>
     </div>`;
+  }
+  // One milestone row: a plain checkbox when target is null, a −/count/target/+
+  // numeric stepper otherwise. Both reflect done state; never punitive.
+  function milestoneRow(goalId, m) {
+    const p = milestoneProgress(m);
+    if (m.target == null) {
+      return `<div class="goal-milestone${p.done ? " done" : ""}" data-milestone-id="${esc(m.id)}">
+        <button class="activity-check" data-act="toggle-milestone" aria-label="Mark done">${p.done ? "✓" : ""}</button>
+        <span class="activity-title">${esc(m.title)}</span>
+        <div class="item-actions"><button class="icon-btn" data-act="del-milestone" aria-label="Delete milestone">🗑️</button></div>
+      </div>`;
+    }
+    return `<div class="goal-milestone counted${p.done ? " done" : ""}" data-milestone-id="${esc(m.id)}">
+      <div class="activity-counter">
+        <button class="count-step" data-act="milestone-dec" aria-label="One less">−</button>
+        <span class="count-val">${m.current || 0}/${m.target}${m.unit ? " " + esc(m.unit) : ""}</span>
+        <button class="count-step" data-act="milestone-inc" aria-label="One more">+</button>
+      </div>
+      <span class="activity-title">${esc(m.title)}</span>
+      <div class="item-actions"><button class="icon-btn" data-act="del-milestone" aria-label="Delete milestone">🗑️</button></div>
+    </div>`;
+  }
+  // A calm pace chip for goals that carry a deadline (reflect-not-diagnose).
+  function paceChip(g, weekKey) {
+    if (!g.deadline) return "";
+    const p = paceFor(g, weekKey, Date.now());
+    const dl = daysLeft(g.deadline, Date.now());
+    const left = dl == null ? "" : dl === 0 ? "due today" : dl + " day" + (dl === 1 ? "" : "s") + " left";
+    return `<div class="pace-chip pace-${esc(p.band)}">${esc(p.label || "")}${left ? " · " + esc(left) : ""}</div>`;
   }
   function goalCard(g, linked, weekKey) {
     const prog = goalProgress(g, linked, weekKey);
@@ -66,7 +110,8 @@ window.GoalsView = function (ctx) {
       ? `<div class="goal-progress"><div class="goal-progress-bar" style="width:${Math.round(prog.pct * 100)}%"></div></div>
          <div class="goal-progress-label">${prog.done}/${prog.total} this week · ${Math.round(prog.pct * 100)}%</div>`
       : `<div class="goal-progress-label">No weekly activities yet — add one below.</div>`;
-    const acts = rows.map((a) => activityRow(g.id, a)).join("");
+    const acts = rows.map((a) => activityRow(g.id, a, weekKey)).join("");
+    const mrows = (g.milestones || []).map((m) => milestoneRow(g.id, m)).join("");
     const linkedN = (linked || []).length;
     return `<div class="goal-card" data-goal-id="${esc(g.id)}">
       <div class="goal-head">
@@ -77,9 +122,17 @@ window.GoalsView = function (ctx) {
         <span class="goal-status-pill${statusCls}">${esc(statusLbl)}</span>
       </div>
       ${bar}
+      ${paceChip(g, weekKey)}
+      ${mrows ? `<div class="goal-milestones">${mrows}</div>` : ""}
+      <form class="add-milestone" data-goal-id="${esc(g.id)}">
+        <input class="mf-title" placeholder="Add a milestone…" />
+        <input class="mf-target" type="number" min="1" step="1" placeholder="#" aria-label="Optional numeric target" />
+        <button type="submit" class="btn-secondary">Add</button>
+      </form>
       <div class="goal-activities">${acts}</div>
       <form class="add-activity" data-goal-id="${esc(g.id)}">
         <input class="af-title" placeholder="Add a weekly activity…" />
+        <input class="af-target" type="number" min="1" step="1" placeholder="×/wk" aria-label="Optional weekly target" />
         <button type="submit" class="btn-secondary">Add</button>
       </form>
       ${linkedN ? `<div class="goal-linked">🔗 ${linkedN} linked task${linkedN === 1 ? "" : "s"}</div>` : ""}
@@ -166,7 +219,8 @@ window.GoalsView = function (ctx) {
     e.preventDefault();
     const title = ($("gf-title").value || "").trim();
     if (!title) { $("gf-title").focus(); return; }
-    const rec = { title, note: ($("gf-note").value || "").trim(), horizon: ctx.goalFormHorizon };
+    const deadline = ($("gf-deadline").value || "").trim() || null;
+    const rec = { title, note: ($("gf-note").value || "").trim(), horizon: ctx.goalFormHorizon, deadline };
     if (ctx.editingGoalId) await store.updateGoal(ctx.editingGoalId, rec);
     else await store.addGoal(rec);
     await renderGoals();
@@ -199,10 +253,30 @@ window.GoalsView = function (ctx) {
       if (!arow) return;
       await store.toggleActivityWeek(goalId, arow.dataset.activityId, currentWeekKey());
       renderGoals();
+    } else if (act === "activity-inc" || act === "activity-dec") {
+      const arow = e.target.closest("[data-activity-id]");
+      if (!arow) return;
+      await store.logActivityWeek(goalId, arow.dataset.activityId, currentWeekKey(), act === "activity-inc" ? 1 : -1);
+      renderGoals();
     } else if (act === "del-activity") {
       const arow = e.target.closest("[data-activity-id]");
       if (!arow) return;
       await store.deleteActivity(goalId, arow.dataset.activityId);
+      renderGoals();
+    } else if (act === "toggle-milestone") {
+      const mrow = e.target.closest("[data-milestone-id]");
+      if (!mrow) return;
+      await store.toggleMilestone(goalId, mrow.dataset.milestoneId, 0);
+      renderGoals();
+    } else if (act === "milestone-inc" || act === "milestone-dec") {
+      const mrow = e.target.closest("[data-milestone-id]");
+      if (!mrow) return;
+      await store.toggleMilestone(goalId, mrow.dataset.milestoneId, act === "milestone-inc" ? 1 : -1);
+      renderGoals();
+    } else if (act === "del-milestone") {
+      const mrow = e.target.closest("[data-milestone-id]");
+      if (!mrow) return;
+      await store.deleteMilestone(goalId, mrow.dataset.milestoneId);
       renderGoals();
     } else if (act === "edit-goal") {
       const g = ctx.goals.find((x) => x.id === goalId);
@@ -212,6 +286,7 @@ window.GoalsView = function (ctx) {
       $("goal-id").value = goalId;
       $("gf-title").value = g.title || "";
       $("gf-note").value = g.note || "";
+      $("gf-deadline").value = g.deadline || "";
       buildGoalHorizonField();
       $("goal-form-title").textContent = "Edit goal";
       $("goal-submit").textContent = "Save";
@@ -246,15 +321,32 @@ window.GoalsView = function (ctx) {
       renderGoals();
     }
   }
-  async function onAddActivitySubmit(e) {
-    const form = e.target.closest(".add-activity");
-    if (!form) return;
-    e.preventDefault();
-    const input = form.querySelector(".af-title");
-    const title = (input.value || "").trim();
-    if (!title) { input.focus(); return; }
-    await store.addActivity(form.dataset.goalId, { title });
-    renderGoals();
+  // Per-card add forms: an activity (optional weekly target) or a milestone
+  // (optional numeric target). One delegated submit handler covers both.
+  async function onCardFormSubmit(e) {
+    const actForm = e.target.closest(".add-activity");
+    if (actForm) {
+      e.preventDefault();
+      const input = actForm.querySelector(".af-title");
+      const title = (input.value || "").trim();
+      if (!title) { input.focus(); return; }
+      const t = Number((actForm.querySelector(".af-target").value || "").trim());
+      const weeklyTarget = isFinite(t) && t > 0 ? t : null;
+      await store.addActivity(actForm.dataset.goalId, { title, weeklyTarget });
+      renderGoals();
+      return;
+    }
+    const msForm = e.target.closest(".add-milestone");
+    if (msForm) {
+      e.preventDefault();
+      const input = msForm.querySelector(".mf-title");
+      const title = (input.value || "").trim();
+      if (!title) { input.focus(); return; }
+      const t = Number((msForm.querySelector(".mf-target").value || "").trim());
+      const target = isFinite(t) && t > 0 ? t : null;
+      await store.addMilestone(msForm.dataset.goalId, { title, target });
+      renderGoals();
+    }
   }
 
   ctx.views.goals = renderGoals;
@@ -265,9 +357,9 @@ window.GoalsView = function (ctx) {
       $("goal-form").addEventListener("submit", submitGoal);
       $("goal-cancel").addEventListener("click", resetGoalForm);
       // One delegated listener covers vision edit, horizon chips, goal cards and
-      // review actions; a separate one handles the per-card add-activity forms.
+      // review actions; a separate one handles the per-card add-activity/milestone forms.
       $("view-goals").addEventListener("click", onGoalsClick);
-      $("goals-list").addEventListener("submit", onAddActivitySubmit);
+      $("goals-list").addEventListener("submit", onCardFormSubmit);
     },
   };
 };

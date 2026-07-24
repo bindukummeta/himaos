@@ -516,3 +516,39 @@ select:disabled { opacity: 0.6; }
 .evidence-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .evidence-details-list { margin: 6px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.5; color: var(--text); }
 .proof-tag { font-weight: 600; }
+
+/* ---- Q3 goals: milestones, counted activities, pace, at-a-glance (Phase E) ---- */
+/* Milestones mirror activity rows so a goal card reads as one calm list. */
+.goal-milestones { margin-top: 10px; }
+.goal-milestone {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border);
+}
+.goal-milestone.done .activity-check { background: var(--accent-2); border-color: var(--accent-2); }
+.goal-milestone.done .activity-title { color: var(--muted); }
+.add-milestone { display: flex; gap: 8px; margin-top: 10px; }
+.add-milestone .mf-title { flex: 1; }
+.add-milestone .mf-target, .add-activity .af-target { width: 68px; flex-shrink: 0; }
+/* Counted rows (weekly-target activities + numeric milestones): a −/value/+ stepper. */
+.activity-counter { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.count-step {
+  width: 26px; height: 26px; border-radius: 7px; cursor: pointer; font-size: 16px; line-height: 1;
+  border: 2px solid var(--border-strong); background: var(--card-2); color: var(--text); font-family: inherit;
+}
+.count-val { min-width: 46px; text-align: center; font-size: 13px; font-weight: 700; }
+.week-note { font-weight: 500; color: var(--muted); }
+/* Pace chip — three calm bands, never red-alarm. */
+.pace-chip, .pace-inline { font-size: 12px; font-weight: 600; }
+.pace-chip { display: inline-block; margin: 4px 0 2px; padding: 3px 10px; border-radius: var(--r-pill); }
+.pace-ontrack, .pace-ahead { background: color-mix(in srgb, var(--accent-2) 16%, var(--card)); color: var(--text); }
+.pace-behind { background: color-mix(in srgb, var(--accent) 12%, var(--card)); color: var(--text); }
+/* Q3 at a glance cards. */
+.q3-overall { padding: 14px; margin-bottom: 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--shadow-sm); }
+.q3-overall-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.q3-card { padding: 14px; margin-bottom: 10px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--shadow-sm); }
+.q3-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.q3-card-title { font-size: 15px; font-weight: 700; }
+.q3-days { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+.q3-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.q3-next { font-size: 13px; margin-top: 6px; font-weight: 600; }
+.q3-clear { color: var(--muted); font-weight: 500; }
+.q3-weight { background: color-mix(in srgb, var(--accent-2) 8%, var(--card)); }

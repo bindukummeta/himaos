@@ -86,6 +86,14 @@ window.SettingsView = function (ctx) {
     renderSettings();
     toast(added ? `${added} starter section(s) restored` : "All starter sections already present");
   }
+  // One-time load of the user's 10 Q3 2026 goals. Idempotent via a meta flag so
+  // a second tap can't duplicate; jumps to the Q3 overview once done.
+  async function seedQ3() {
+    const added = await window.Q3Seed.seedQ3Goals(store);
+    await ctx.refreshGoals();
+    if (added) { ctx.showView("q3"); toast(`Loaded ${added} Q3 goals 🗓️`); }
+    else toast("Your Q3 goals are already loaded ✅");
+  }
 
   ctx.views.settings = renderSettings;
 
@@ -95,6 +103,7 @@ window.SettingsView = function (ctx) {
       $("export-backup").addEventListener("click", exportBackup);
       $("import-backup").addEventListener("change", importBackup);
       $("restore-starters").addEventListener("click", restoreStarters);
+      $("seed-q3").addEventListener("click", seedQ3);
       $("show-usage").addEventListener("click", showUsageSummary);
     },
   };

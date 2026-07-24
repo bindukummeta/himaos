@@ -99,7 +99,19 @@ Positioning: lead with the universal promise; broad in *who*, sharp in *how*.
       and caps them with an encouraging "even with a rough week…" line — DB v6, new
       `evidence` store in backup, pure `evidence-utils` + unit tests. A lightweight
       sleep chip (poor/ok/good) was added to the daily check-in to feed it. The
-      Vault is the positive counterweight to the correlation engine.)
+      Vault is the positive counterweight to the correlation engine.
+      Phase E: Q3 goal tracking — goals gained an optional `deadline`, a
+      `startedAt` pace window, embedded `milestones` (one-time checkbox when
+      `target` is null, numeric −/+ counter otherwise) and an optional
+      `weeklyTarget` on activities (counted per ISO week via `weekCounts`). A
+      pure `q3-utils` (+ tests) rolls these into completion %, a calm three-band
+      pace read (progress vs. elapsed share of the goal's own window), days-left,
+      next-step, and an auto weight-loss read from the check-in weights. A new
+      read-only "Q3 at a glance" view (`q3-view`) shows every deadline goal
+      together; a one-time Settings seed (`q3-seed`, idempotent via a meta flag)
+      loads the founder's 10 Q3 2026 goals. Additive DB v7. Reflect-not-diagnose
+      throughout; no real push reminders — a pure PWA can't, so nudges stay
+      in-app.)
 - [ ] **Step 6 — Coach (someday layer).** Start as a structured, rule-based
       companion (right question at the right time, entirely on-device). A
       conversational AI coach is a deliberate LATER fork — it must not break the
@@ -121,14 +133,17 @@ Positioning: lead with the universal promise; broad in *who*, sharp in *how*.
 
 - Vanilla HTML/CSS/JS, no build step; PWA (service worker + manifest); IndexedDB.
 - `storage.js` = `HimaStore` seam (sections/items/checkins/goals/weights/health/
-  evidence/meta; DB v6). Pure, tested logic modules shared by app + `node --test`:
-  `donow-utils`, `checkin-utils`, `voice-utils`, `dreaming-utils`, `goals-utils`,
-  `usage-utils`, `insights-utils`, `health-utils`, `evidence-utils`.
+  evidence/meta; DB v7 — goals carry embedded milestones + deadline; activities
+  carry optional weeklyTarget/weekCounts). Pure, tested logic modules shared by
+  app + `node --test`: `donow-utils`, `checkin-utils`, `voice-utils`,
+  `dreaming-utils`, `goals-utils`, `q3-utils`, `usage-utils`, `insights-utils`,
+  `health-utils`, `evidence-utils`.
 - UI is split (no build step, UMD-on-`window`): `app-shell.js` exposes the shared
   `ctx` (`window.HimaShell`) — DOM/format helpers, label maps, mutable app state,
   drawer/nav, `showView` router + `ctx.views` registry, data refreshers, silent
   usage tracking. Each view is its own file (`window.XxxView(ctx)` → registers a
   render fn + returns `wire()`): `dashboard-view`, `donow-view`, `checkin-view`,
-  `goals-view`, `health-view`, `evidence-view`, `insights-view`, `section-view`,
-  `settings-view`. `app.js` is now a thin bootstrap: instantiate views, wire, boot.
+  `goals-view`, `q3-view`, `health-view`, `evidence-view`, `insights-view`,
+  `section-view`, `settings-view` (+ `q3-seed`, the one-time Q3 goals loader).
+  `app.js` is now a thin bootstrap: instantiate views, wire, boot.
 - Matches the style of sibling apps (`education-planner-app`, `summer-holidays-app`).

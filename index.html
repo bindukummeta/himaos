@@ -28,6 +28,7 @@
       <li><button class="nav-item" data-view="donow"><span class="nav-ico">⚡</span><span class="nav-label">Do Now</span></button></li>
       <li><button class="nav-item" data-view="checkin"><span class="nav-ico">💗</span><span class="nav-label">Daily check-in</span></button></li>
       <li><button class="nav-item" data-view="goals"><span class="nav-ico">🎯</span><span class="nav-label">Goals</span></button></li>
+      <li><button class="nav-item" data-view="q3"><span class="nav-ico">🗓️</span><span class="nav-label">Q3 at a glance</span></button></li>
       <li><button class="nav-item" data-view="health"><span class="nav-ico">🩺</span><span class="nav-label">Health</span></button></li>
       <li><button class="nav-item" data-view="evidence"><span class="nav-ico">📜</span><span class="nav-label">Evidence</span></button></li>
       <li><button class="nav-item" data-view="insights"><span class="nav-ico">📊</span><span class="nav-label">Insights</span></button></li>
@@ -265,6 +266,7 @@
             <label>Horizon</label>
             <div id="gf-horizon-field"></div>
           </div>
+          <div class="field"><label for="gf-deadline">Deadline <span class="chip-optional">(optional)</span></label><input id="gf-deadline" type="date" /></div>
           <div class="form-actions">
             <button type="submit" class="btn-primary" id="goal-submit">Add goal</button>
             <button type="button" id="goal-cancel" class="btn-secondary hidden">Cancel</button>
@@ -273,6 +275,16 @@
       </div>
 
       <div id="goals-list"></div>
+    </section>
+
+    <!-- ============ Q3 AT A GLANCE (Phase E) ============ -->
+    <section id="view-q3" class="view hidden">
+      <div class="section-head">
+        <h2>🗓️ Q3 at a glance</h2>
+        <span id="q3-count" class="count-badge"></span>
+      </div>
+      <p class="hint">Every goal with a deadline, together: how far along, whether you're on pace, days left, and the next concrete step. A calm overview — never a scoreboard.</p>
+      <div id="q3-list"></div>
     </section>
 
     <!-- ============ PATTERN INSIGHTS (Step 5) ============ -->
@@ -423,6 +435,11 @@
         <button type="button" id="restore-starters" class="btn-secondary">Restore starter sections</button>
       </div>
       <div class="card">
+        <h2>My Q3 2026 goals</h2>
+        <p class="hint">Load the 10 Q3 goals (deadline Sep 30, 2026) with their milestones and weekly non-negotiables, ready to track. This only adds them once — tap again and it won't duplicate.</p>
+        <button type="button" id="seed-q3" class="btn-secondary">Load my Q3 2026 goals</button>
+      </div>
+      <div class="card">
         <h2>My usage <span class="chip-optional">(private)</span></h2>
         <p class="hint">A quiet, on-device check on your own habit — how many of the last two weeks you actually used Hima OS. Nothing is recorded off this device, and this is the only place it's ever shown, so it can't nudge you while you're settling in.</p>
         <button type="button" id="show-usage" class="btn-secondary">Show my usage</button>
@@ -448,6 +465,7 @@
   <script src="voice-utils.js"></script>
   <script src="dreaming-utils.js"></script>
   <script src="goals-utils.js"></script>
+  <script src="q3-utils.js"></script>
   <script src="usage-utils.js"></script>
   <script src="insights-utils.js"></script>
   <script src="health-utils.js"></script>
@@ -461,6 +479,8 @@
   <script src="donow-view.js"></script>
   <script src="checkin-view.js"></script>
   <script src="goals-view.js"></script>
+  <script src="q3-view.js"></script>
+  <script src="q3-seed.js"></script>
   <script src="evidence-view.js"></script>
   <script src="section-view.js"></script>
   <script src="settings-view.js"></script>

@@ -8,7 +8,7 @@
   "use strict";
 
   const DB_NAME = "hima-os";
-  const DB_VERSION = 6;
+  const DB_VERSION = 7;
   const STORES = { sections: "sections", items: "items", meta: "meta", checkins: "checkins", goals: "goals", weights: "weights", health: "health", evidence: "evidence" };
 
   // Meta key holding the define-once vitamin list (Phase C). Each entry:
@@ -290,7 +290,10 @@
     const record = Object.assign(
       // horizon: vision|year|quarter; status: active|paused|done. activities are
       // embedded {id,title,doneWeeks[]} ticked per ISO week. parentId reserved.
-      { id: uid(), title: "", note: "", horizon: "quarter", status: "active", parentId: null, snoozedWeek: null, activities: [], order: now, createdAt: now, updatedAt: now },
+      // deadline: "YYYY-MM-DD" (optional). startedAt: pace-window start (defaults
+      // to createdAt). milestones: embedded {id,title,target,unit,current,done,
+      // doneAt} — a plain checkbox when target is null, numeric progress otherwise.
+      { id: uid(), title: "", note: "", horizon: "quarter", status: "active", parentId: null, snoozedWeek: null, activities: [], milestones: [], deadline: null, startedAt: now, order: now, createdAt: now, updatedAt: now },
       rec
     );
     const store = await tx(STORES.goals, "readwrite");
@@ -323,7 +326,10 @@
   async function addActivity(goalId, rec) {
     const g = await getGoal(goalId);
     if (!g) return null;
-    const activity = Object.assign({ id: uid(), title: "", doneWeeks: [], createdAt: Date.now() }, rec);
+    // weeklyTarget (optional) turns an activity into a counted cadence (e.g. 4×);
+    // weekCounts {weekKey:n} holds the per-week tally for those. doneWeeks stays
+    // the binary "done this week" set used by everything that predates targets.
+    const activity = Object.assign({ id: uid(), title: "", doneWeeks: [], weeklyTarget: null, weekCounts: {}, createdAt: Date.now() }, rec);
     const activities = (g.activities || []).concat([activity]);
     await updateGoal(goalId, { activities });
     return activity;
@@ -352,6 +358,64 @@
       return Object.assign({}, a, { doneWeeks: weeks });
     });
     return updateGoal(goalId, { activities });
+  }
+  // Add delta (usually +1 / -1) to a counted activity's tally for an ISO week.
+  // Clamps at 0; mirrors the count into doneWeeks so binary consumers still see
+  // it as "done" once the count is at least 1.
+  async function logActivityWeek(goalId, activityId, weekKey, delta) {
+    const g = await getGoal(goalId);
+    if (!g) return null;
+    const activities = (g.activities || []).map((a) => {
+      if (a.id !== activityId) return a;
+      const counts = Object.assign({}, a.weekCounts || {});
+      const next = Math.max(0, (counts[weekKey] || 0) + (delta || 0));
+      if (next > 0) counts[weekKey] = next; else delete counts[weekKey];
+      const weeks = Array.isArray(a.doneWeeks) ? a.doneWeeks.slice() : [];
+      const at = weeks.indexOf(weekKey);
+      if (next > 0 && at < 0) weeks.push(weekKey);
+      if (next === 0 && at >= 0) weeks.splice(at, 1);
+      return Object.assign({}, a, { weekCounts: counts, doneWeeks: weeks });
+    });
+    return updateGoal(goalId, { activities });
+  }
+  // Embedded milestone ops. target null = one-time checkbox; target set = numeric.
+  async function addMilestone(goalId, rec) {
+    const g = await getGoal(goalId);
+    if (!g) return null;
+    const m = Object.assign({ id: uid(), title: "", target: null, unit: "", current: 0, done: false, doneAt: null, createdAt: Date.now() }, rec);
+    const milestones = (g.milestones || []).concat([m]);
+    await updateGoal(goalId, { milestones });
+    return m;
+  }
+  async function updateMilestone(goalId, milestoneId, patch) {
+    const g = await getGoal(goalId);
+    if (!g) return null;
+    const milestones = (g.milestones || []).map((m) => (m.id === milestoneId ? Object.assign({}, m, patch) : m));
+    return updateGoal(goalId, { milestones });
+  }
+  async function deleteMilestone(goalId, milestoneId) {
+    const g = await getGoal(goalId);
+    if (!g) return null;
+    const milestones = (g.milestones || []).filter((m) => m.id !== milestoneId);
+    return updateGoal(goalId, { milestones });
+  }
+  // Toggle a one-time milestone, or add delta to a numeric one (auto-marks done
+  // when current reaches target, un-marks if it drops back below).
+  async function toggleMilestone(goalId, milestoneId, delta) {
+    const g = await getGoal(goalId);
+    if (!g) return null;
+    const now = Date.now();
+    const milestones = (g.milestones || []).map((m) => {
+      if (m.id !== milestoneId) return m;
+      if (m.target == null) {
+        const done = !m.done;
+        return Object.assign({}, m, { done, doneAt: done ? now : null });
+      }
+      const current = Math.max(0, (m.current || 0) + (delta || 0));
+      const done = current >= m.target;
+      return Object.assign({}, m, { current, done, doneAt: done ? (m.doneAt || now) : null });
+    });
+    return updateGoal(goalId, { milestones });
   }
 
   // ---- weights (neutral weight trend; number + feeling per entry) ----
@@ -547,7 +611,8 @@
     getEvidence, getEvidenceOne, addEvidence, updateEvidence, deleteEvidence,
     getVitamins, addVitamin, deleteVitamin,
     getGoals, getGoal, addGoal, updateGoal, deleteGoal, reorderGoals,
-    addActivity, updateActivity, deleteActivity, toggleActivityWeek,
+    addActivity, updateActivity, deleteActivity, toggleActivityWeek, logActivityWeek,
+    addMilestone, updateMilestone, deleteMilestone, toggleMilestone,
     getMeta, setMeta,
     exportAll, importAll,
   };
